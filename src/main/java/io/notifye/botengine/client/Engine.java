@@ -25,11 +25,9 @@ import io.notifye.botengine.client.bots.Bot;
 import io.notifye.botengine.client.exception.BotException;
 import io.notifye.botengine.client.interceptor.LoggingRequestInterceptor;
 import io.notifye.botengine.client.model.Entity;
-import io.notifye.botengine.client.model.Entry;
 import io.notifye.botengine.client.model.Interaction;
 import io.notifye.botengine.client.model.ResponseInteraction;
 import io.notifye.botengine.client.model.Story;
-import io.notifye.botengine.client.model.Synonym;
 
 public final class Engine {
 	private static final Logger log = LoggerFactory.getLogger(Engine.class);
@@ -131,7 +129,7 @@ public final class Engine {
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Interaction> request = new HttpEntity<>(interaction, headers);
 		
-		ResponseEntity<String> response = client.exchange(INTERACTION_URI_RESOURCE, HttpMethod.POST, request, String.class);
+		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.POST, request, String.class);
 		log.info("Interaction Response -> {}", response);
 		if(response.getStatusCode().is2xxSuccessful()){
 			log.info("Interactions created suscessfull");
@@ -147,7 +145,7 @@ public final class Engine {
 		
 		HttpEntity<WelcomeMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
-		ResponseEntity<String> response = client.exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
+		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
 		log.info("Interaction Response -> {}", response);
 		if(response.getStatusCode().is2xxSuccessful()){
 			log.info("Interactions created suscessfull");
@@ -163,7 +161,7 @@ public final class Engine {
 		
 		HttpEntity<FallbackMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
-		ResponseEntity<String> response = client.exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
+		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
 		log.info("Interaction Response -> {}", response);
 		if(response.getStatusCode().is2xxSuccessful()){
 			log.info("Interactions created suscessfull");
@@ -180,25 +178,7 @@ public final class Engine {
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Entity> request = new HttpEntity<>(entity, headers);
 		
-		/*List<Entry> entries = entity.getEntries();
-		
-		Synonym rootSynonym = null;
-		List<Synonym> synonyms = new ArrayList<>();
-		for (Entry entry : entries) {
-			synonyms = entry.getSynonyms();
-			long rootReference = synonyms
-					.stream().filter(s -> s.getValue().equals(entry.getValue())).count();
-			
-			if(rootReference <= 0){
-				rootSynonym = Synonym.builder().value(entry.getValue()).build();
-				//entry.getSynonyms().add(rootSynonym);
-			}
-		}
-		
-		synonyms.add(rootSynonym);*/
-		
-		
-		ResponseEntity<String> entityResponse = client.exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, String.class);
+		ResponseEntity<String> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, String.class);
 		log.info("Entity response -> {}", entityResponse);
 		if(entityResponse.getStatusCode().is2xxSuccessful()){
 			log.info("Entity created suscessfull");
