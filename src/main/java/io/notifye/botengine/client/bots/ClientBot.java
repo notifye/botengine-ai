@@ -1,11 +1,12 @@
 package io.notifye.botengine.client.bots;
 
+import io.notifye.botengine.client.Engine;
 import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.InteractionAction;
 import io.notifye.botengine.client.action.QueryAction;
 import io.notifye.botengine.client.action.StoriesAction;
+import io.notifye.botengine.client.action.controller.QueryController;
 import io.notifye.botengine.client.exception.BotUnsuportedOperationException;
-import io.notifye.botengine.client.model.QueryResponse;
 import io.notifye.botengine.client.model.Story;
 import lombok.Builder;
 import lombok.Data;
@@ -40,33 +41,14 @@ public @Data class ClientBot extends Bot {
 
 	@Override
 	public QueryAction query(Story story) throws Exception {
-		return new QueryController(story);
+		return new QueryController(story, getToken(), Engine.getSession());
+	}
+
+	@Override
+	public QueryAction query(Story story, String session) throws Exception {
+		return new QueryController(story, getToken(), session);
 	}
 	
-	public class QueryController implements QueryAction {
-		
-		private Story story;
-		
-		public QueryController(){}
-		
-		public QueryController(Story story){
-			this.story = story;
-		}
-
-		@Override
-		public QueryResponse q(String expression) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public QueryResponse q(Story story, String expression) {
-			if(this.story == null){
-				this.story = story;
-			}
-			return null;
-		}
-
-	}
+	
 
 }

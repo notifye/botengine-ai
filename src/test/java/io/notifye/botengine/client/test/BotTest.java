@@ -5,11 +5,13 @@ import java.util.Arrays;
 import io.notifye.botengine.client.BotEngine;
 import io.notifye.botengine.client.BotEngine.TokenType;
 import io.notifye.botengine.client.Token;
+import io.notifye.botengine.client.action.QueryAction;
 import io.notifye.botengine.client.bots.Bot;
 import io.notifye.botengine.client.model.Entity;
 import io.notifye.botengine.client.model.Entry;
 import io.notifye.botengine.client.model.Interaction;
 import io.notifye.botengine.client.model.Parameter;
+import io.notifye.botengine.client.model.QueryResponse;
 import io.notifye.botengine.client.model.ResponseInteraction;
 import io.notifye.botengine.client.model.Story;
 import io.notifye.botengine.client.model.Synonym;
@@ -102,8 +104,6 @@ public class BotTest {
 					
 					
 					//.interaction(Interaction.builder().build())
-					//.interaction(Interaction.builder().build())
-					//.interaction(Interaction.builder().build())
 					.fallback(Interaction.builder()
 							.name("hello")
 							.action("fallback")
@@ -123,23 +123,6 @@ public class BotTest {
 						.build())
 				.build();
 		
-		
-		//Story story = developerBot.stories().get( developerBot.getStory().getId() );
-		//log.info("Remote Story -> {}", story);
-				
-		
-		/*List<Story> stories = developerBot.stories().get();
-		log.info("Bot Stories -> {}", stories);
-		
-		stories.stream().forEach(s -> {
-			try {
-				Story story = developerBot.stories().get(s.getId());
-				log.info("Story -> {}", story);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
-		
 		// Switch Execution Mode and execute some query
 		Bot clientBot = developerBot.switchToken(
 			Token.builder()
@@ -147,9 +130,19 @@ public class BotTest {
 				.tokenType(TokenType.CLIENT)
 				.build()
 		);
+			
 		
-		QueryResponse queryResponse = clientBot.query(developerBot.getStory()).q("Hi");
-		log.info("Query Result -> {}", queryResponse);*/
+		QueryAction conversation = clientBot.query(developerBot.getStory());
+		
+		QueryResponse queryResponse = conversation.q("the would be great to see LOTR");
+		log.info("Query Result -> {}", queryResponse);
+		
+		QueryResponse fallbackResponse = conversation.q("E ae 0/");
+		log.info("Fallback 1 Query Result -> {}", fallbackResponse);
+		
+		fallbackResponse = conversation.q("Nao entendi !!");
+		log.info("Fallback 2 Query Result -> {}", fallbackResponse);
+		
 		
 	}
 

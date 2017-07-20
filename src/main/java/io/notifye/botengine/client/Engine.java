@@ -26,6 +26,8 @@ import io.notifye.botengine.client.exception.BotException;
 import io.notifye.botengine.client.interceptor.LoggingRequestInterceptor;
 import io.notifye.botengine.client.model.Entity;
 import io.notifye.botengine.client.model.Interaction;
+import io.notifye.botengine.client.model.Query;
+import io.notifye.botengine.client.model.QueryResponse;
 import io.notifye.botengine.client.model.ResponseInteraction;
 import io.notifye.botengine.client.model.Story;
 
@@ -33,9 +35,10 @@ public final class Engine {
 	private static final Logger log = LoggerFactory.getLogger(Engine.class);
 	
 	private static final String STORIES_RESOURCE = "/stories";
-	private final static String WELCOME_RESOURCE = "%s/stories/%s/interactions/welcome";
-	private final static String INTERACTIONS_RESOURCE = "%s/stories/%s/interactions";
-	private final static String FALLBACK_RESOURCE = "%s/stories/%s/interactions/fallback";
+	private static final String WELCOME_RESOURCE = "%s/stories/%s/interactions/welcome";
+	private static final String INTERACTIONS_RESOURCE = "%s/stories/%s/interactions";
+	private static final String FALLBACK_RESOURCE = "%s/stories/%s/interactions/fallback";
+	private static final String QUERY_RESOURCE = "%s/query";
 	
 	private static RestTemplate client;
 	
@@ -184,6 +187,57 @@ public final class Engine {
 			log.info("Entity created suscessfull");
 		}
 		return entity;
+	}
+	
+	//Query
+	public static QueryResponse query(Story story, String query, Token token, String session){
+		Query queryRequest = Query.builder()
+				.query(query)
+				.sessionId(session)
+				.storyId(story.getId())
+				.lifespan(getDefaultLifespan())
+				.build();
+		return q(queryRequest, token);
+	}
+	
+	public static QueryResponse query(Query query, Token token, String session){
+		if(query.getSessionId() == null){
+			query.setSessionId(session);
+		}
+		return q(query, token);
+	}
+	public static QueryResponse query(Story story, Query query, Token token, String session){
+		if(query.getStoryId() == null){
+			query.setStoryId(story.getId());
+		}
+		return q(query, token);
+	}
+	
+	private static int getDefaultLifespan() {
+		return 2;
+	}
+	
+	public static String getSession(){
+		long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
+		return String.valueOf(number);
+	}
+	
+	private static QueryResponse q(Query query, Token token){
+		final String ENTITY_URI_RESOURCE = String.format(QUERY_RESOURCE, Bot.API_URL);
+		HttpHeaders headers = getDevHeaders(token);
+		HttpEntity<Query> request = new HttpEntity<>(query, headers);
+		
+		ResponseEntity<String> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, String.class);
+		log.info("Entity response -> {}", entityResponse);
+		
+		QueryResponse response = null;
+		if(entityResponse.getStatusCode().is2xxSuccessful()){
+			log.info("Query executed suscessfull");
+			response = QueryResponse.builder()
+					.build();
+		}
+		return response;
+		
 	}
 	
 	private static HttpHeaders getDevHeaders(Token token){

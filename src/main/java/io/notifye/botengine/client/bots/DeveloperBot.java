@@ -52,5 +52,10 @@ public @Data class DeveloperBot extends Bot {
 		}
 		return interactionsActionController;
 	}
+
+	@Override
+	public QueryAction query(Story story, String session) throws Exception {
+		throw new BotUnsuportedOperationException("Use Client Token for this action");
+	}
 	
 }

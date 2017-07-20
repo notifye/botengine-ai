@@ -14,6 +14,9 @@ import lombok.Data;
 public @Data class Interaction implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
+	@JsonIgnore
+	private String id;
+	
 	@JsonProperty("name")
 	private String name;
 	
