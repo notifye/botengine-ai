@@ -161,7 +161,7 @@ QueryResponse c3POResponse = bot.switchToken(
                     .tokenType(TokenType.CLIENT)
                     .build())
                     .query(bot.getStory())
-                           .q("Hi");
+                           .q("I would like to be a Jedi");
                       
 c3POResponse.getResult()
    .getFulfillment().stream().forEach(response -> {
