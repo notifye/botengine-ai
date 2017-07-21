@@ -15,11 +15,11 @@ public enum BotFactory {
 		switch (this) {
 		case developerBot:
 			return (T) DeveloperBot.builder()
-					.token(token.getTokenWithAuthorization())
+					.token(token)
 					.build();
 		case clientBot:
 			return (T) ClientBot.builder()
-					.token(token.getTokenWithAuthorization())
+					.token(token)
 					.build();
 		default:
 			return null;

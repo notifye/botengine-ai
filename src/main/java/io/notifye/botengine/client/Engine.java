@@ -49,8 +49,8 @@ public final class Engine {
 		String uri = getStoryUriResourceById(id);
 		try{
 			HttpHeaders headers = getDevHeaders(token);
-			
 			HttpEntity<String> entity = new HttpEntity<>(headers);
+			
 			ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.GET, entity, String.class);
 			
 			if(response.getStatusCode().is2xxSuccessful()){
@@ -235,14 +235,11 @@ public final class Engine {
 		HttpEntity<Query> request = new HttpEntity<>(query, headers);
 		
 		ResponseEntity<QueryResponse> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, QueryResponse.class);
-		//ResponseEntity<String> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, String.class);
 		log.info("Entity response -> {}", entityResponse);
 		
 		QueryResponse response = null;
 		if(entityResponse.getStatusCode().is2xxSuccessful()){
 			log.info("Query executed suscessfull");
-			/*response = QueryResponse.builder()
-					.build();*/
 			response = entityResponse.getBody();
 		}
 		return response;
@@ -251,8 +248,8 @@ public final class Engine {
 	
 	private static HttpHeaders getDevHeaders(Token token){
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("authorization", token.getToken());
 		headers.add("Accept", "text/plain");
+		headers.add("authorization", String.format("Bearer %s", token.getToken()));
 		return headers;
 	}
 	
@@ -264,10 +261,9 @@ public final class Engine {
 			converters.add(new StringHttpMessageConverter());
 			converters.add(converter);
 			converter.setObjectMapper(getObjectMapper());
+	
 			client.setMessageConverters(converters);
-			
 			client.setInterceptors(getRequestInterceptors());
-			
 			return client;
 		}
 		return client;
