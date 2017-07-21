@@ -1,10 +1,14 @@
 Botengine.ai Java Client (Under Construction)
 ===================
 
-
 A idiomatic way to create chatbots through the BotEngine API 
 ----------
 
+### Table of contents
+
+1. [Introduction](#Introduction)
+2. [Quickstart](#Quickstart)
+3. [Show me the code](#Show-me-the-code)
 
 Introduction
 -------------
@@ -170,7 +174,3 @@ c3POResponse.getResult()
 ```
 
 **That's it for now! :)**
-
-### Table of contents
-
-[TOC]
