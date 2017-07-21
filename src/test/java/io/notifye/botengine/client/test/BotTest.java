@@ -1,12 +1,22 @@
 package io.notifye.botengine.client.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Arrays;
+import java.util.List;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import io.notifye.botengine.client.BotEngine;
 import io.notifye.botengine.client.BotEngine.TokenType;
 import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.QueryAction;
 import io.notifye.botengine.client.bots.Bot;
+import io.notifye.botengine.client.bots.ClientBot;
+import io.notifye.botengine.client.bots.DeveloperBot;
 import io.notifye.botengine.client.model.Entity;
 import io.notifye.botengine.client.model.Entry;
 import io.notifye.botengine.client.model.Interaction;
@@ -24,10 +34,50 @@ public class BotTest {
 	private static String clientAccessToken = "Bearer e5b129af8161ed369e27804f9a2735fa81a43d2e911e661195c6c7160b70b27b";
 	private static String devAccessToken = "Bearer 9bc76810e6767d68970095e8db817a79134245b096eddcd645d34f19996751a1";
 	
-	public static void main(String[] args) throws Exception {
+	private List<String> okResponses = Arrays.asList("Your reservation on $movies has been confirmed");
+	
+	private List<String> fallbackResponses = Arrays.asList(
+							"Eu não entendi, você poderia repetir ?", 
+							"Por favor repita", 
+							"Desculpe-me, eu ainda estou aprendendo a entender seres humanos. Poderia, por gentileza, repetir o que disse ?", 
+							"Porra você já está me enchenco o saco", 
+							"Acho que sou burra demais para lhe entender.",
+							"Vamos lá, me ajude. Tente de outra forma");
+	
+	private Bot developerBot;
+	private Entry lordOfTheRingsEntry;
+	private Entry startWarsEntry;
+	
+	@Before
+	public void setup() throws Exception {
+		// Create Entries
+		lordOfTheRingsEntry = Entry.builder()
+				.value("The Lord of the Rings")
+				.synonyms(Arrays.asList(
+						Synonym.builder()
+							.value("LOTR")
+							.build(),
+						Synonym.builder()
+							.value("The Fellowship of the Ring")
+							.build(),
+						Synonym.builder()
+							.value("The Lord of the Rings")
+							.build()))
+				.build();
 		
-		// Configure Bot, Story and parametrized Interactions
-		Bot developerBot = BotEngine.ai(
+		startWarsEntry = Entry.builder()
+				.value("Stars Wars")
+				.synonyms(Arrays.asList(
+						Synonym.builder()
+							.value("SW")
+							.build(),
+						Synonym.builder()
+							.value("Stars Wars")
+							.build()))
+				.build();
+		
+		// Configure Bot
+		developerBot = BotEngine.ai(
 				Token.builder()
 					.token(devAccessToken)
 					.tokenType(TokenType.DEV)
@@ -39,31 +89,19 @@ public class BotTest {
 						.build())
 				//.del()
 			.bot();
+	}
+	
+	@After
+	public void after() throws Exception{
+		developerBot.stories().del();
+	}
+	
+	@Test
+	public void botTest() throws Exception {
 		
-		Entry lordOfTheRingsEntry = Entry.builder()
-									.value("The Lord of the Rings")
-									.synonyms(Arrays.asList(
-											Synonym.builder()
-												.value("LOTR")
-												.build(),
-											Synonym.builder()
-												.value("The Fellowship of the Ring")
-												.build(),
-											Synonym.builder()
-												.value("The Lord of the Rings")
-												.build()))
-									.build();
-		
-		Entry startWarsEntry = Entry.builder()
-									.value("Stars Wars")
-									.synonyms(Arrays.asList(
-											Synonym.builder()
-												.value("SW")
-												.build(),
-											Synonym.builder()
-												.value("Stars Wars")
-												.build()))
-									.build();
+		assertNotNull(developerBot);
+		assertThat(developerBot)
+			.describedAs("Bot is DeveloperBot instance").isInstanceOf(DeveloperBot.class);
 		
 		developerBot.interactions()
 				.add()
@@ -98,10 +136,9 @@ public class BotTest {
 											.build()))
 								.responses(Arrays.asList(ResponseInteraction.builder()
 										.type(ResponseInteractionType.text)
-										.messages(Arrays.asList("Your reservation on $movies has been confirmed"))
+										.messages(okResponses)
 										.build()))
 								.build())
-					
 					
 					//.interaction(Interaction.builder().build())
 					.fallback(Interaction.builder()
@@ -112,13 +149,7 @@ public class BotTest {
 							.responses(Arrays.asList(
 									ResponseInteraction.builder()
 											.type(ResponseInteractionType.text)
-											.messages(Arrays.asList(
-													"Eu não entendi, você poderia repetir ?", 
-													"Por favor repita", 
-													"Desculpe-me, eu ainda estou aprendendo a entender seres humanos. Poderia, por gentileza, repetir o que disse ?", 
-													"Porra você já está me enchenco o saco", 
-													"Acho que sou burra demais para lhe entender.",
-													"Vamos lá, me ajude. Tente de outra forma"))
+											.messages(fallbackResponses)
 											.build()))
 						.build())
 				.build();
@@ -131,18 +162,22 @@ public class BotTest {
 				.build()
 		);
 			
+		assertThat(clientBot)
+			.describedAs("Bot is ClientBot instance").isInstanceOf(ClientBot.class);
 		
 		QueryAction conversation = clientBot.query(developerBot.getStory());
 		
 		QueryResponse queryResponse = conversation.q("the would be great to see LOTR");
+		assertNotNull(queryResponse);
 		log.info("Query Result -> {}", queryResponse);
 		
 		QueryResponse fallbackResponse = conversation.q("E ae 0/");
+		assertNotNull(fallbackResponse);
 		log.info("Fallback 1 Query Result -> {}", fallbackResponse);
 		
 		fallbackResponse = conversation.q("Nao entendi !!");
+		assertNotNull(fallbackResponse);
 		log.info("Fallback 2 Query Result -> {}", fallbackResponse);
-		
 		
 	}
 
