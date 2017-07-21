@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.notifye</groupId>
 	<artifactId>botengine-ai-client</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>0.1.1-SNAPSHOT</version>
 
 	<properties>
 		<lombok.version>1.16.8</lombok.version>
