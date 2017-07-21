@@ -31,8 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BotTest {
-	private static String clientAccessToken = "e5b129af8161ed369e27804f9a2735fa81a43d2e911e661195c6c7160b70b27b";
-	private static String devAccessToken = "9bc76810e6767d68970095e8db817a79134245b096eddcd645d34f19996751a1";
+	private static String clientAccessToken = System.getenv("CLIENT_TOKEN");
+	private static String devAccessToken = System.getenv("DEV_TOKEN");
 	
 	private List<String> okResponses = Arrays.asList("Your reservation on $movies has been confirmed");
 	
