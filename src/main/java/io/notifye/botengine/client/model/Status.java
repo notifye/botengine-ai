@@ -13,6 +13,6 @@ public @Data class Status implements Serializable {
 
 	private int code;
 	
-	private String errorType;
+	private String type;
 
 }

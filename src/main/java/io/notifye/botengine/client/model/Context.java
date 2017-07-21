@@ -6,19 +6,20 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @Builder
+@ToString
 @AllArgsConstructor
-@RequiredArgsConstructor
-public @Data final class Parameter implements Serializable {
+public @Data class Context implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	private String alias;
-	//private Entity entity;
-	private String entity;
-	private List<String> prompts;
-	private String webhook;
+	private String id;
 	
+	private boolean root;
+	
+	//References ?
+	
+	private List<String> contextOut;
 
 }

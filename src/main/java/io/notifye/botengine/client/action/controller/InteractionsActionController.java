@@ -2,6 +2,7 @@ package io.notifye.botengine.client.action.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.notifye.botengine.client.Engine;
@@ -10,24 +11,19 @@ import io.notifye.botengine.client.action.InteractionAction;
 import io.notifye.botengine.client.bots.Bot;
 import io.notifye.botengine.client.model.Interaction;
 import io.notifye.botengine.client.model.enums.InteractionType;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class InteractionsActionController implements InteractionAction {
-	
+@RequiredArgsConstructor
+public final @Data class InteractionsActionController implements InteractionAction {
 	private static final long serialVersionUID = 1L;
-	
 	private final String ACTION_NAME = InteractionAction.class.getSimpleName();
 	
 	private final Bot bot;
 	private final Token token;
 	private List<Interaction> interactions;
-	
-	public InteractionsActionController(final Bot bot, final Token token) {
-		super();
-		this.bot = bot;
-		this.token = token;
-	}
 	
 	public List<Interaction> getInteractions(){
 		return this.interactions;
@@ -62,11 +58,11 @@ public final class InteractionsActionController implements InteractionAction {
 	
 	@Override
 	public Bot build() {
-		
+		Objects.requireNonNull(this.interactions, "Please necessary add interactions");
 		this.interactions.stream()
 			.forEach(interaction -> {
-				log.info("Creating Entities...");
 				
+				log.info("Creating Entities...");
 				if(interaction.getEntities() != null && interaction.getEntities().size() > 0){
 					interaction.getEntities().forEach(entity -> {
 						Engine.createEntity(entity, this.token);
@@ -93,7 +89,5 @@ public final class InteractionsActionController implements InteractionAction {
 	public Token getToken() {
 		return token;
 	}
-	
-	
 	
 }

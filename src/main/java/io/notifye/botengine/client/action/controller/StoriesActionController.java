@@ -8,20 +8,19 @@ import io.notifye.botengine.client.action.StoriesAction;
 import io.notifye.botengine.client.bots.Bot;
 import io.notifye.botengine.client.exception.BotException;
 import io.notifye.botengine.client.model.Story;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
-public final class StoriesActionController implements StoriesAction {
+@AllArgsConstructor
+@RequiredArgsConstructor
+public final @Data class StoriesActionController implements StoriesAction {
 	private static final long serialVersionUID = 1L;
 	private final String ACTION_NAME = StoriesAction.class.getSimpleName();
 	
 	private final Bot bot;
 	private final Token token;
 	private Story story;
-	
-	public StoriesActionController(final Bot bot, final Token token) {
-		super();
-		this.bot = bot;
-		this.token = token;
-	}
 	
 	@Override
 	public StoriesAction create(Story story) throws BotException {
@@ -74,17 +73,5 @@ public final class StoriesActionController implements StoriesAction {
 	public int getOrderExecution() {
 		return -1;
 	}
-
-	public Story getStory() {
-		return story;
-	}
-
-	public void setStory(Story story) {
-		this.story = story;
-	}
-
-	public Token getToken() {
-		return token;
-	}
-
+	
 }

@@ -34,7 +34,8 @@ import io.notifye.botengine.client.model.Story;
 public final class Engine {
 	private static final Logger log = LoggerFactory.getLogger(Engine.class);
 	
-	private static final String STORIES_RESOURCE = "/stories";
+	private static final String STORIES_RESOURCE = "%s/stories";
+	private static final String STORY_RESOURCE = "%s/stories/%s";
 	private static final String WELCOME_RESOURCE = "%s/stories/%s/interactions/welcome";
 	private static final String INTERACTIONS_RESOURCE = "%s/stories/%s/interactions";
 	private static final String FALLBACK_RESOURCE = "%s/stories/%s/interactions/fallback";
@@ -43,10 +44,9 @@ public final class Engine {
 	private static RestTemplate client;
 	
 	// Stories
-	
 	public static Story getStory(String id, Token token) throws BotException{
 		Story story = null;
-		String uri = Bot.API_URL + STORIES_RESOURCE + "/" + id;
+		String uri = getStoryUriResourceById(id);
 		try{
 			HttpHeaders headers = getDevHeaders(token);
 			
@@ -73,7 +73,7 @@ public final class Engine {
 	}
 	
 	public static Story createStory(Story story, Token token) throws BotException{
-		String uri = Bot.API_URL + STORIES_RESOURCE;
+		String uri = getRootStoryUriResource();
 		log.info("Create Story with type -> {}", story);
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Story> request = new HttpEntity<>(story, headers);
@@ -89,7 +89,7 @@ public final class Engine {
 				node = getObjectMapper().readValue(body, JsonNode.class);
 				JsonNode idNode = node.get("id");
 				
-				//TODO: Validade npe exception
+				//TODO: Validate npe exception
 				String id = idNode.asText();
 				story.setId(id);
 				log.info("Create Story result -> {}", story);
@@ -101,7 +101,7 @@ public final class Engine {
 	}
 	
 	public static void deleteStory(String id, Token token) {
-		String uri = Bot.API_URL + STORIES_RESOURCE + "/" + id;
+		String uri = getStoryUriResourceById(id);
 		log.debug("Delete Story by Id -> {}", id);
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Story> request = new HttpEntity<>(headers);
@@ -172,7 +172,6 @@ public final class Engine {
 		return interaction;
 	}
 	
-	
 	//Entities
 	public static Entity createEntity(Entity entity, Token token){
 		final String ENTITY_URI_RESOURCE = String.format("%s/entities", Bot.API_URL);
@@ -222,19 +221,29 @@ public final class Engine {
 		return String.valueOf(number);
 	}
 	
+	private static String getRootStoryUriResource(){
+		return String.format(STORIES_RESOURCE, Bot.API_URL);
+	}
+	
+	private static String getStoryUriResourceById(String id){
+		return String.format(STORY_RESOURCE, Bot.API_URL, id);
+	}
+	
 	private static QueryResponse q(Query query, Token token){
 		final String ENTITY_URI_RESOURCE = String.format(QUERY_RESOURCE, Bot.API_URL);
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Query> request = new HttpEntity<>(query, headers);
 		
-		ResponseEntity<String> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, String.class);
+		ResponseEntity<QueryResponse> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, QueryResponse.class);
+		//ResponseEntity<String> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, String.class);
 		log.info("Entity response -> {}", entityResponse);
 		
 		QueryResponse response = null;
 		if(entityResponse.getStatusCode().is2xxSuccessful()){
 			log.info("Query executed suscessfull");
-			response = QueryResponse.builder()
-					.build();
+			/*response = QueryResponse.builder()
+					.build();*/
+			response = entityResponse.getBody();
 		}
 		return response;
 		

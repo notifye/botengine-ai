@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-public @Data class Interaction implements Serializable {
+public @Data class QueryInteractionResponse implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	@JsonIgnore
@@ -38,9 +38,6 @@ public @Data class Interaction implements Serializable {
 	
 	@JsonIgnore
 	private List<Entity> entities;
-	
-	@JsonProperty(value = "parameters")
-	private List<Parameter> parameters;
 	
 	@JsonProperty("responses")
 	private List<ResponseInteraction> responses;
