@@ -11,4 +11,9 @@ import lombok.ToString;
 public @Data class Token {
 	private String token;
 	private TokenType tokenType;
+	
+	public Token getTokenWithAuthorization(){
+		this.setToken("Bearer ".concat(this.token)); 
+		return this;
+	}
 }
