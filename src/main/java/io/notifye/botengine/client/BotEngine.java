@@ -18,7 +18,6 @@ public class BotEngine {
 		default:
 			return null;
 		}
-		
 	}
 	
 	public static enum TokenType {
