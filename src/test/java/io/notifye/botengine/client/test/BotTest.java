@@ -117,7 +117,7 @@ public class BotTest {
 														"Fala aí nobre camarada, em que posso lhe ser útil?", 
 														"Por favor escolha um filme"))
 												.build()))
-							 .build())
+							.build())
 					.interaction(
 							Interaction.builder()
 								.name("choosing genre")
@@ -138,8 +138,8 @@ public class BotTest {
 										.type(ResponseInteractionType.text)
 										.messages(okResponses)
 										.build()))
-								.build())
-					
+								.build()
+								.addChild(Interaction.builder().build()))
 					//.interaction(Interaction.builder().build())
 					.fallback(Interaction.builder()
 							.name("hello")
