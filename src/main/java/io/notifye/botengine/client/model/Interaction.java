@@ -1,7 +1,10 @@
 package io.notifye.botengine.client.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,13 +40,25 @@ public @Data class Interaction implements Serializable {
 	private List<String> userSays;
 	
 	@JsonIgnore
-	private List<Entity> entities;
+	private List<Entity> entities = new CopyOnWriteArrayList<Entity>(new ArrayList<Entity>());
 	
 	@JsonProperty(value = "parameters")
 	private List<Parameter> parameters;
 	
 	@JsonProperty("responses")
 	private List<ResponseInteraction> responses;
+	
+	@JsonIgnore
+	private List<Interaction> childs;
+	
+	public Interaction addChild(Interaction childInteraction){
+		Objects.requireNonNull(childInteraction, "Argument childInteraction is empty");
+		if(childs == null){
+			childs = new CopyOnWriteArrayList<Interaction>(new ArrayList<Interaction>());
+		}
+		childs.add(childInteraction);
+		return this;
+	}
 
 	
 }

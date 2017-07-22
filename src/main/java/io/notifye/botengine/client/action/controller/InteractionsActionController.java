@@ -37,6 +37,9 @@ public final @Data class InteractionsActionController implements InteractionActi
 
 	@Override
 	public InteractionAction welcome(Interaction welcomeInteraction) {
+		Objects.requireNonNull(this.interactions, "Please necessary add interactions");
+		Objects.requireNonNull(welcomeInteraction, "Interaction is Mandatory");
+
 		welcomeInteraction.setType(InteractionType.welcome);
 		this.interactions.add(welcomeInteraction);
 		return this;
@@ -44,6 +47,9 @@ public final @Data class InteractionsActionController implements InteractionActi
 
 	@Override
 	public InteractionAction fallback(Interaction fallbackInteraction) {
+		Objects.requireNonNull(this.interactions, "Please necessary add interactions");
+		Objects.requireNonNull(fallbackInteraction, "Interaction is Mandatory");
+
 		fallbackInteraction.setType(InteractionType.fallback);
 		this.interactions.add(fallbackInteraction);
 		return this;
@@ -51,6 +57,9 @@ public final @Data class InteractionsActionController implements InteractionActi
 
 	@Override
 	public InteractionAction interaction(Interaction userInteraction) {
+		Objects.requireNonNull(this.interactions, "Please necessary add interactions");
+		Objects.requireNonNull(userInteraction, "Interaction is Mandatory");
+
 		userInteraction.setType(InteractionType.user);
 		this.interactions.add(userInteraction);
 		return this;
@@ -64,13 +73,22 @@ public final @Data class InteractionsActionController implements InteractionActi
 				
 				log.info("Creating Entities...");
 				if(interaction.getEntities() != null && interaction.getEntities().size() > 0){
-					interaction.getEntities().forEach(entity -> {
-						Engine.createEntity(entity, this.token);
-					});
+					
+					interaction.getEntities()
+						.forEach(entity -> Engine.createEntity(entity, this.token));
 				}
 				//CREATE INTERACTION
 				log.info("Creating Interaction -> {}", interaction);
-				Engine.creatInteraction(this.bot.getStory(), interaction, this.token);
+				Interaction root = Engine.creatInteraction(this.bot.getStory(), interaction, this.token);
+				
+				if(interaction.getChilds() != null && interaction.getChilds().size() > 0){
+					log.debug("Create child entities...");
+
+					interaction.getChilds().forEach(child ->{
+						log.debug("Root Entity Id: {} Child entity -> {}", root.getId(), child);
+						Engine.createChildInteraction(this.bot.getStory(), root, child, this.token);
+					});
+				}
 			});
 		
 		return this.bot;

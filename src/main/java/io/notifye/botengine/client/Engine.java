@@ -172,6 +172,10 @@ public final class Engine {
 		return interaction;
 	}
 	
+	public static Interaction createChildInteraction(Story story, Interaction root, Interaction child, Token token){
+		return child;
+	}
+	
 	//Entities
 	public static Entity createEntity(Entity entity, Token token){
 		final String ENTITY_URI_RESOURCE = String.format("%s/entities", Bot.API_URL);
