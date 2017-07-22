@@ -71,14 +71,14 @@ public final @Data class InteractionsActionController implements InteractionActi
 		this.interactions.stream()
 			.forEach(interaction -> {
 				
-				log.info("Creating Entities...");
+				log.debug("Creating Entities...");
 				if(interaction.getEntities() != null && interaction.getEntities().size() > 0){
 					
 					interaction.getEntities()
 						.forEach(entity -> Engine.createEntity(entity, this.token));
 				}
 				//CREATE INTERACTION
-				log.info("Creating Interaction -> {}", interaction);
+				log.debug("Creating Interaction -> {}", interaction);
 				Interaction root = Engine.creatInteraction(this.bot.getStory(), interaction, this.token);
 				
 				if(interaction.getChilds() != null && interaction.getChilds().size() > 0){

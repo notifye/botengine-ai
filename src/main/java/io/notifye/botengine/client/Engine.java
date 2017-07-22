@@ -54,7 +54,7 @@ public final class Engine {
 			ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.GET, entity, String.class);
 			
 			if(response.getStatusCode().is2xxSuccessful()){
-				log.info("Get Story result -> {}", response);
+				log.debug("Get Story result -> {}", response);
 				JsonNode node = getObjectMapper().readValue(response.getBody(), JsonNode.class);
 				JsonNode idNode = node.get("id");
 				JsonNode nameNode = node.get("name");
@@ -92,7 +92,7 @@ public final class Engine {
 				//TODO: Validate npe exception
 				String id = idNode.asText();
 				story.setId(id);
-				log.info("Create Story result -> {}", story);
+				log.debug("Create Story result -> {}", story);
 			} catch (IOException e) {
 				throw new BotException(e);
 			}
@@ -109,7 +109,7 @@ public final class Engine {
 		ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.DELETE, request, String.class);
 		if(response.getStatusCode().is2xxSuccessful()){
 			//get
-			log.info("Removed Story result -> {}", response);
+			log.debug("Removed Story result -> {}", response);
 		}
 	}
 	
@@ -133,9 +133,9 @@ public final class Engine {
 		HttpEntity<Interaction> request = new HttpEntity<>(interaction, headers);
 		
 		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.POST, request, String.class);
-		log.info("Interaction Response -> {}", response);
+		log.debug("Interaction Response -> {}", response);
 		if(response.getStatusCode().is2xxSuccessful()){
-			log.info("Interactions created suscessfull");
+			log.debug("Interactions created suscessfull");
 		}
 		return interaction;
 	}
@@ -149,9 +149,9 @@ public final class Engine {
 		HttpEntity<WelcomeMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
 		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
-		log.info("Interaction Response -> {}", response);
+		log.debug("Interaction Response -> {}", response);
 		if(response.getStatusCode().is2xxSuccessful()){
-			log.info("Interactions created suscessfull");
+			log.debug("Interactions created suscessfull");
 		}
 		return interaction;
 	}
@@ -165,9 +165,9 @@ public final class Engine {
 		HttpEntity<FallbackMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
 		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
-		log.info("Interaction Response -> {}", response);
+		log.debug("Interaction Response -> {}", response);
 		if(response.getStatusCode().is2xxSuccessful()){
-			log.info("Interactions created suscessfull");
+			log.debug("Interactions created suscessfull");
 		}
 		return interaction;
 	}
@@ -179,7 +179,7 @@ public final class Engine {
 	//Entities
 	public static Entity createEntity(Entity entity, Token token){
 		final String ENTITY_URI_RESOURCE = String.format("%s/entities", Bot.API_URL);
-		log.info("Post Entity with URI -> {}", ENTITY_URI_RESOURCE);
+		log.debug("Post Entity with URI -> {}", ENTITY_URI_RESOURCE);
 		
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Entity> request = new HttpEntity<>(entity, headers);
@@ -247,7 +247,6 @@ public final class Engine {
 			response = entityResponse.getBody();
 		}
 		return response;
-		
 	}
 	
 	private static HttpHeaders getDevHeaders(Token token){
