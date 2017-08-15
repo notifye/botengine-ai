@@ -85,8 +85,8 @@ public class BotTest {
 					.build())
 			.stories()
 				.create(Story.builder()
-						.name("Example")
-						.description("My first story")
+						.name("Movies reservation")
+						.description("Movies reservation")
 						.build())
 				//.del()
 			.bot();
