@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.After;
@@ -37,12 +38,12 @@ public class BotTest {
 	private List<String> okResponses = Arrays.asList("Your reservation on $movies has been confirmed");
 	
 	private List<String> fallbackResponses = Arrays.asList(
-							"Eu não entendi, você poderia repetir ?", 
-							"Por favor repita", 
-							"Desculpe-me, eu ainda estou aprendendo a entender seres humanos. Poderia, por gentileza, repetir o que disse ?", 
-							"Porra você já está me enchenco o saco", 
-							"Acho que sou burra demais para lhe entender.",
-							"Vamos lá, me ajude. Tente de outra forma");
+							"I do not understand, could you repeat?", 
+							"Please repeat", 
+							"Excuse me, I'm still learning to understand humans. Could you please repeat what I said?", 
+							"Damn, you're already fucking pissing me off.", 
+							"I think I'm too stupid to understand you.",
+							"Come on, help me. Try it another way!");
 	
 	private Bot developerBot;
 	private Entry lordOfTheRingsEntry;
@@ -91,7 +92,7 @@ public class BotTest {
 			.bot();
 	}
 	
-	@After
+	//@After
 	public void after() throws Exception{
 		developerBot.stories().del();
 	}
@@ -111,36 +112,52 @@ public class BotTest {
 										ResponseInteraction.builder()
 												.type(ResponseInteractionType.text)
 												.messages(Arrays.asList(
-														"Ola", 
-														"E aí como vai", 
-														"Como posso ajuda-lo", 
-														"Fala aí nobre camarada, em que posso lhe ser útil?", 
-														"Por favor escolha um filme"))
+														"Hello", 
+														"Hey whats up", 
+														"How can I help you?", 
+														"Speak there noble fellow, how can I help you?", 
+														"Please choose a movie"))
 												.build()))
 							.build())
+					//Add hello interaction
+					.interaction(
+							Interaction.builder()
+							.name("Hello")
+							.action("hello")
+							.userSays(Arrays.asList("Hello", "Hi"))
+							.responses(Arrays.asList(ResponseInteraction.builder()
+									.type(ResponseInteractionType.text)
+									.messages(Arrays.asList("Please choose a movie"))
+									.build()))
+							.build())
+					
+					//chossing genre interaction
 					.interaction(
 							Interaction.builder()
 								.name("choosing genre")
-								.action("hello")
-								.triggers(Arrays.asList("hello1"))
-								.userSays(Arrays.asList("the would be great to see @movies:movies", "I would like to go to @movies:movies", "@movies:movies"))
-								.entities(Arrays.asList(Entity.builder()
-											.name("movies")
-											.entries(Arrays.asList(lordOfTheRingsEntry, startWarsEntry))
-											.build()))
-								.parameters(Arrays.asList(
-										Parameter.builder()
-											.alias("movies")
-											.entity("@movies")
-											.prompts(Arrays.asList("Which movie are you interested in?"))
-											.build()))
+								.action("genre")
+								.userSays(Arrays.asList("Do you play fantasy movies", "Do you play Science Fiction Movies"))
 								.responses(Arrays.asList(ResponseInteraction.builder()
 										.type(ResponseInteractionType.text)
-										.messages(okResponses)
+										.messages(Arrays.asList("Yes of course! The best movies you found here!"))
 										.build()))
 								.build()
-								.addChild(Interaction.builder().build()))
-					//.interaction(Interaction.builder().build())
+								.addChild(
+									Interaction.builder()
+									.name("choosing movies")
+									.action("helloMovies")
+									.userSays(Arrays.asList("the would be great to see @movies:movies", "I would like to go to @movies:movies", "@movies:movies"))
+									.parameters(Arrays.asList(
+											Parameter.builder()
+												.alias("movies")
+												.entity("@movies")
+												.prompts(Arrays.asList("Which movie are you interested in?"))
+												.build()))
+									.responses(Arrays.asList(ResponseInteraction.builder()
+											.type(ResponseInteractionType.text)
+											.messages(okResponses)
+											.build()))
+										.build()))
 					.fallback(Interaction.builder()
 							.name("hello")
 							.action("fallback")
@@ -152,6 +169,8 @@ public class BotTest {
 											.messages(fallbackResponses)
 											.build()))
 						.build())
+					
+					.referenceByName("Hello", "choosing movies")
 				.build();
 		
 		// Switch Execution Mode and execute some query
@@ -171,11 +190,11 @@ public class BotTest {
 		assertNotNull(queryResponse);
 		log.info("Query Result -> {}", queryResponse);
 		
-		QueryResponse fallbackResponse = conversation.q("E ae 0/");
+		QueryResponse fallbackResponse = conversation.q("Hey 0/");
 		assertNotNull(fallbackResponse);
 		log.info("Fallback 1 Query Result -> {}", fallbackResponse);
 		
-		fallbackResponse = conversation.q("Nao entendi !!");
+		fallbackResponse = conversation.q("I did not understand!!");
 		assertNotNull(fallbackResponse);
 		log.info("Fallback 2 Query Result -> {}", fallbackResponse);
 		

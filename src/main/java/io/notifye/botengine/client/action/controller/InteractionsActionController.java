@@ -1,6 +1,8 @@
 package io.notifye.botengine.client.action.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -9,6 +11,9 @@ import io.notifye.botengine.client.Engine;
 import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.InteractionAction;
 import io.notifye.botengine.client.bots.Bot;
+import io.notifye.botengine.client.exception.BotException;
+import io.notifye.botengine.client.model.Context;
+import io.notifye.botengine.client.model.Context.ReferenceType;
 import io.notifye.botengine.client.model.Interaction;
 import io.notifye.botengine.client.model.enums.InteractionType;
 import lombok.Data;
@@ -24,6 +29,7 @@ public final @Data class InteractionsActionController implements InteractionActi
 	private final Bot bot;
 	private final Token token;
 	private List<Interaction> interactions;
+	private List<Context> contexts = new CopyOnWriteArrayList<Context>(new ArrayList<Context>());
 	
 	public List<Interaction> getInteractions(){
 		return this.interactions;
@@ -66,32 +72,64 @@ public final @Data class InteractionsActionController implements InteractionActi
 	}
 	
 	@Override
+	public InteractionAction referenceById(String interactionIdIn, String interactionIdOut) {
+		// Create context
+		addContext(ReferenceType.BY_ID, interactionIdIn, interactionIdOut, true);
+		return this;
+	}
+
+	@Override
+	public InteractionAction referenceById(String interactionIdIn, String interactionIdOut, boolean root) {
+		// Create context
+		addContext(ReferenceType.BY_ID, interactionIdIn, interactionIdOut, root);
+		return this;
+	}
+
+	@Override
+	public InteractionAction referenceByName(String interactionNameIn, String interactionNameOut) {
+		addContext(ReferenceType.BY_NAME, interactionNameIn, interactionNameOut, true);
+		return this;
+	}
+
+	@Override
+	public InteractionAction referenceByName(String interactionNameIn, String interactionNameOut, boolean root) {
+		addContext(ReferenceType.BY_NAME, interactionNameIn, interactionNameOut, root);
+		return this;
+	}
+	
+	@Override
 	public Bot build() {
 		Objects.requireNonNull(this.interactions, "Please necessary add interactions");
+		log.info("Compiling Interactions");
+		createInteractions();
+		createReferences();
+		return this.bot;
+	}
+
+	private void createInteractions() {
 		this.interactions.stream()
 			.forEach(interaction -> {
 				
-				log.debug("Creating Entities...");
-				if(interaction.getEntities() != null && interaction.getEntities().size() > 0){
-					
-					interaction.getEntities()
-						.forEach(entity -> Engine.createEntity(entity, this.token));
-				}
+				Engine.initializeEmptyProperties(interaction);
+				
+				log.info("Creating Entities...");
+				createEntities(interaction);
+				
 				//CREATE INTERACTION
 				log.debug("Creating Interaction -> {}", interaction);
-				Interaction root = Engine.creatInteraction(this.bot.getStory(), interaction, this.token);
-				
-				if(interaction.getChilds() != null && interaction.getChilds().size() > 0){
-					log.debug("Create child entities...");
-
-					interaction.getChilds().forEach(child ->{
-						log.debug("Root Entity Id: {} Child entity -> {}", root.getId(), child);
-						Engine.createChildInteraction(this.bot.getStory(), root, child, this.token);
-					});
+				try {
+					Interaction root = Engine.creatInteraction(this.bot.getStory(), interaction, this.token);
+					if(interaction.getChilds() != null && interaction.getChilds().size() > 0 && interaction.getChilds().size() > 0){
+						log.info("Create child entities...");
+						createChilds(interaction, root);
+					}
+				} catch (Exception e) {
+					log.error("Error on create Child interaction", e.getMessage());
+					if(log.isDebugEnabled()) {
+						e.printStackTrace();
+					}
 				}
 			});
-		
-		return this.bot;
 	}
 
 	@Override
@@ -108,4 +146,40 @@ public final @Data class InteractionsActionController implements InteractionActi
 		return token;
 	}
 	
+	private void createChilds(Interaction interaction, Interaction root) {
+		interaction.getChilds().forEach(child ->{
+			log.info("Root Entity Id: {} Child entity -> {}", root.getId(), child);
+			try {
+				Engine.createChildInteraction(this.bot.getStory(), root, child, this.token);
+			} catch (BotException e) {
+				e.printStackTrace();
+			}
+		});
+	}
+
+	private void createEntities(Interaction interaction) {
+		if(interaction.getEntities() != null && interaction.getEntities().size() > 0){
+			
+			interaction.getEntities()
+				.forEach(entity -> Engine.createEntity(entity, this.token));
+		}
+	}
+
+	private void createReferences() {
+		this.contexts.forEach(ctx -> {
+			Engine.createReference(this.bot.getStory(), this.interactions, this.token, ctx);
+		});
+	}
+	
+	private void addContext(ReferenceType referenceType, String interactionIdIn, String interactionIdOut, boolean root) {
+		Context ctx = Context.builder()
+				.id(interactionIdIn)
+				.referenceType(referenceType)
+				.contextOut(Arrays.asList(interactionIdOut))
+				.references(Collections.emptyList())
+				.root(root)
+				.build();
+		contexts.add(ctx);
+	}
+
 }

@@ -2,6 +2,7 @@ package io.notifye.botengine.client.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @RequiredArgsConstructor
 public @Data class Interaction implements Serializable {
+	
 	private static final long serialVersionUID = 1L;
 	
 	@JsonIgnore
@@ -34,7 +36,7 @@ public @Data class Interaction implements Serializable {
 	private String action;
 	
 	@JsonProperty("triggers")
-	private List<String> triggers;
+	private List<String> triggers = Collections.emptyList();
 	
 	@JsonProperty("userSays")
 	private List<String> userSays;
@@ -43,13 +45,13 @@ public @Data class Interaction implements Serializable {
 	private List<Entity> entities = new CopyOnWriteArrayList<Entity>(new ArrayList<Entity>());
 	
 	@JsonProperty(value = "parameters")
-	private List<Parameter> parameters;
+	private List<Parameter> parameters = Collections.emptyList();
 	
 	@JsonProperty("responses")
-	private List<ResponseInteraction> responses;
+	private List<ResponseInteraction> responses = Collections.emptyList();
 	
 	@JsonIgnore
-	private List<Interaction> childs;
+	private List<Interaction> childs = Collections.emptyList();
 	
 	public Interaction addChild(Interaction childInteraction){
 		Objects.requireNonNull(childInteraction, "Argument childInteraction is empty");

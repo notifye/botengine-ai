@@ -31,7 +31,7 @@ public @Data class QueryResult implements Serializable {
 	
 	private QueryInteractionResponse interaction;
 	
-	private List<Context> contexts;
+	private List<QueryContext> contexts;
 	
 	private List<Fulfillment> fulfillment;
 
