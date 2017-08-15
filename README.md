@@ -9,6 +9,7 @@ A idiomatic way to create chatbots through the BotEngine API
 1. [Introduction](#Introduction)
 2. [Quickstart](#Quickstart)
 3. [Show me the code](#Show-me-the-code)
+4. [More Examples](#Examples)
 
 Introduction<a name="Introduction"></a>
 -------------
@@ -111,7 +112,6 @@ bot.interactions()
         .interaction(Interaction.builder()
         .name("choosing a person")
         .action("theForce")
-        .triggers(Arrays.asList("theForce"))
         .userSays(Arrays.asList("I would like to be a @persons:persons."))
         .entities(Arrays.asList(Entity.builder()
                       .name("persons")
@@ -174,3 +174,8 @@ c3POResponse.getResult()
 ```
 
 **That's it for now! :)**
+
+More Examples<a name="Examples"></a>
+-------------------
+
+[Movies Reservation](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/client/test/BotTest.java)
