@@ -4,10 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -137,6 +135,10 @@ public class BotTest {
 								.name("choosing genre")
 								.action("genre")
 								.userSays(Arrays.asList("Do you play fantasy movies", "Do you play Science Fiction Movies"))
+								.entities(Arrays.asList(Entity.builder()
+										.name("movies")
+										.entries(Arrays.asList(lordOfTheRingsEntry, startWarsEntry))
+										.build()))
 								.responses(Arrays.asList(ResponseInteraction.builder()
 										.type(ResponseInteractionType.text)
 										.messages(Arrays.asList("Yes of course! The best movies you found here!"))
