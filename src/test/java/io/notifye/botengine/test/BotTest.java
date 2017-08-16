@@ -19,6 +19,7 @@ import io.notifye.botengine.model.Entity;
 import io.notifye.botengine.model.Entry;
 import io.notifye.botengine.model.Interaction;
 import io.notifye.botengine.model.Parameter;
+import io.notifye.botengine.model.Query;
 import io.notifye.botengine.model.QueryResponse;
 import io.notifye.botengine.model.ResponseInteraction;
 import io.notifye.botengine.model.Story;
@@ -109,6 +110,7 @@ public class BotTest {
 					.interaction(Interaction.builder()
 						.name("Hello")
 						.action("hello")
+						.triggers(Arrays.asList("hello"))
 						.userSays(Arrays.asList("Hello", "Hi"))
 						.responses(Arrays.asList(ResponseInteraction.builder()
 								.type(ResponseInteractionType.text)
@@ -179,6 +181,16 @@ public class BotTest {
 		queryResponse = conversation.q("the would be great to see LOTR");
 		assertNotNull(queryResponse);
 		log.info("Query Result -> {}", queryResponse);
+		
+		// Or use Query object to create queries
+		queryResponse = conversation.q(
+				Query.builder()
+					.sessionId("12345678910")
+					.storyId(developerBot.getStory().getId())
+					.confidence(Bot.DEFAULT_CONFIDENCE) // or not set and leave defaults
+					.lifespan(Bot.DEFAULT_LIFESPAN)     // or not set and leave defaults
+					.trigger("hello")
+					.build());
 		
 		QueryResponse fallbackResponse = conversation.q("Hey 0/");
 		assertNotNull(fallbackResponse);

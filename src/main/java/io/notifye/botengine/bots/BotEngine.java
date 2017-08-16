@@ -7,12 +7,9 @@ import java.util.Objects;
 import io.notifye.botengine.security.Token;
 
 public class BotEngine {
-	public static final double DEFAULT_CONFIDENCE = 0.6;
-	public static final int DEFAULT_LIFESPAN = 2;
-	
 	
 	public static <T extends Bot> Bot ai(Token token){
-		return createBot(token, DEFAULT_CONFIDENCE, DEFAULT_LIFESPAN);
+		return createBot(token, Bot.DEFAULT_CONFIDENCE, Bot.DEFAULT_LIFESPAN);
 	}
 	
 	public static <T extends Bot> Bot ai(Token token, double confidence, int lifespan){

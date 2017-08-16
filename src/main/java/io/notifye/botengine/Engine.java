@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.notifye.botengine.bots.Bot;
 import io.notifye.botengine.exception.BotException;
+import io.notifye.botengine.exception.QueryExecutionBotException;
 import io.notifye.botengine.interceptor.LoggingRequestInterceptor;
 import io.notifye.botengine.model.Context;
 import io.notifye.botengine.model.Entity;
@@ -203,25 +204,24 @@ public final class Engine {
 	 */
 	public static void initializeEmptyProperties(Interaction interaction) {
 		//childs
-		if(interaction.getChilds() == null) {
+		if(isNull(interaction.getChilds())) {
 			interaction.setChilds(Collections.emptyList());
 		}
 		
 		//parameters
-		if(interaction.getParameters() == null) {
+		if(isNull(interaction.getParameters())) {
 			interaction.setParameters(Collections.emptyList());
 		}
 		
 		// entities
-		if(interaction.getEntities() == null) {
+		if(isNull(interaction.getEntities())) {
 			interaction.setEntities(Collections.emptyList());
 		}
 		
 		//triggers
-		if(interaction.getTriggers() == null) {
+		if(isNull(interaction.getTriggers())) {
 			interaction.setTriggers(Collections.emptyList());
 		}
-		
 	}
 
 	//Entities
@@ -241,7 +241,7 @@ public final class Engine {
 	}
 	
 	//Query
-	public static QueryResponse query(Story story, String query, Token token, String session){
+	public static QueryResponse query(Story story, String query, Token token, String session) throws QueryExecutionBotException{
 		Query queryRequest = Query.builder()
 				.query(query)
 				.sessionId(session)
@@ -251,21 +251,25 @@ public final class Engine {
 		return q(queryRequest, token);
 	}
 	
-	public static QueryResponse query(Query query, Token token, String session){
-		if(Objects.isNull(query.getSessionId())){
+	public static QueryResponse query(Query query, Token token, String session) throws QueryExecutionBotException{
+		if(isNull(query.getSessionId())){
 			query.setSessionId(session);
 		}
 		return q(query, token);
 	}
-	public static QueryResponse query(Story story, Query query, Token token, String session){
-		if(Objects.isNull(query.getStoryId())){
+	public static QueryResponse query(Story story, Query query, Token token, String session) throws QueryExecutionBotException{
+		if(isNull(query.getStoryId())){
 			query.setStoryId(story.getId());
 		}
 		return q(query, token);
 	}
 	
 	private static int getDefaultLifespan() {
-		return 2;
+		return Bot.DEFAULT_LIFESPAN;
+	}
+	
+	private static double getDefaultConfidence() {
+		return Bot.DEFAULT_CONFIDENCE;
 	}
 	
 	private static boolean isSuccessful(ResponseEntity<String> response) {
@@ -362,75 +366,6 @@ public final class Engine {
 		return String.valueOf(number);
 	}
 	
-	private static String getRootStoryUriResource(){
-		return String.format(STORIES_RESOURCE, Bot.API_URL);
-	}
-	
-	private static String getStoryUriResourceById(String id){
-		return String.format(STORY_RESOURCE, Bot.API_URL, id);
-	}
-	
-	private static QueryResponse q(Query query, Token token){
-		final String ENTITY_URI_RESOURCE = String.format(QUERY_RESOURCE, Bot.API_URL);
-		HttpHeaders headers = getDevHeaders(token);
-		HttpEntity<Query> request = new HttpEntity<>(query, headers);
-		
-		ResponseEntity<QueryResponse> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, QueryResponse.class);
-		log.info("Entity response -> {}", entityResponse);
-		
-		QueryResponse response = null;
-		if(entityResponse.getStatusCode().is2xxSuccessful()){
-			log.info("Query executed suscessfull");
-			response = entityResponse.getBody();
-		}
-		return response;
-	}
-	
-	private static HttpHeaders getDevHeaders(Token token){
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Accept", "text/plain");
-		headers.add("authorization", String.format("Bearer %s", token.getToken()));
-		return headers;
-	}
-	
-	private static RestTemplate getClient(){
-		if(Objects.isNull(client)){
-			client = new RestTemplate();
-			List<HttpMessageConverter<?>> converters = new ArrayList<>();
-			MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-			converters.add(new StringHttpMessageConverter());
-			converters.add(converter);
-			converter.setObjectMapper(getObjectMapper());
-	
-			client.setMessageConverters(converters);
-			client.setInterceptors(getRequestInterceptors());
-			return client;
-		}
-		return client;
-	}
-	
-	private static List<ClientHttpRequestInterceptor> getRequestInterceptors(){
-		LoggingRequestInterceptor loggingRequestInterceptor = new LoggingRequestInterceptor();
-
-		List<ClientHttpRequestInterceptor> ris = new ArrayList<ClientHttpRequestInterceptor>();
-		ris.add(loggingRequestInterceptor);
-		return ris;
-	}
-	
-	private static ObjectMapper getObjectMapper(){
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-		return mapper;
-	}
-	
-	private static ResponseEntity<String> put(String url, HttpEntity<?> entity) {
-		return getClient().exchange(url, HttpMethod.PUT, entity, String.class);
-	}
-	
-	private static ResponseEntity<String> post(String url, HttpEntity<?> entity) {
-		return getClient().exchange(url, HttpMethod.POST, entity, String.class);
-	}
-	
 	public static final class WelcomeMessageWrapper {
 		
 		@JsonProperty("responses")
@@ -501,4 +436,114 @@ public final class Engine {
 		
 	}
 
+	
+	private static String getRootStoryUriResource(){
+		return String.format(STORIES_RESOURCE, Bot.API_URL);
+	}
+	
+	private static String getStoryUriResourceById(String id){
+		return String.format(STORY_RESOURCE, Bot.API_URL, id);
+	}
+	
+	private static QueryResponse q(Query query, Token token) throws QueryExecutionBotException{
+		final String ENTITY_URI_RESOURCE = String.format(QUERY_RESOURCE, Bot.API_URL);
+		QueryResponse response = null;
+		HttpHeaders headers = getDevHeaders(token);
+		HttpEntity<Query> request = new HttpEntity<>(query, headers);
+		
+		if(isValidQuery(query)) {
+			initializeQueryDefaults(query);
+			
+			try {
+				ResponseEntity<String> entityResponse =  post(ENTITY_URI_RESOURCE, request);
+				log.debug("Entity response -> {}", entityResponse);
+				
+				if(entityResponse.getStatusCode().is2xxSuccessful()){
+					log.info("Query executed suscessfull");
+					response = getObjectMapper().readValue(entityResponse.getBody(), QueryResponse.class);
+				}
+			} catch (IOException e) {
+				log.error("Error on execute query", e.getMessage());
+				if(log.isDebugEnabled()) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return response;
+	}
+
+	private static HttpHeaders getDevHeaders(Token token){
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Accept", "text/plain");
+		headers.add("authorization", String.format("Bearer %s", token.getToken()));
+		return headers;
+	}
+	
+	private static RestTemplate getClient(){
+		if(Objects.isNull(client)){
+			client = new RestTemplate();
+			List<HttpMessageConverter<?>> converters = new ArrayList<>();
+			MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+			converters.add(new StringHttpMessageConverter());
+			converters.add(converter);
+			converter.setObjectMapper(getObjectMapper());
+	
+			client.setMessageConverters(converters);
+			client.setInterceptors(getRequestInterceptors());
+			return client;
+		}
+		return client;
+	}
+	
+	private static List<ClientHttpRequestInterceptor> getRequestInterceptors(){
+		LoggingRequestInterceptor loggingRequestInterceptor = new LoggingRequestInterceptor();
+
+		List<ClientHttpRequestInterceptor> ris = new ArrayList<ClientHttpRequestInterceptor>();
+		ris.add(loggingRequestInterceptor);
+		return ris;
+	}
+	
+	private static ObjectMapper getObjectMapper(){
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		return mapper;
+	}
+	
+	private static ResponseEntity<String> put(String url, HttpEntity<?> entity) {
+		return getClient().exchange(url, HttpMethod.PUT, entity, String.class);
+	}
+	
+	private static ResponseEntity<String> post(String url, HttpEntity<?> entity) {
+		return getClient().exchange(url, HttpMethod.POST, entity, String.class);
+	}
+	
+	private static boolean isNull(Object obj) {
+		return Objects.isNull(obj);
+	}
+	
+	/**
+	 * @param query
+	 */
+	private static void initializeQueryDefaults(Query query) {
+		if(isNull(query.getConfidence()) || 0 <= query.getConfidence() ) {
+			query.setConfidence(getDefaultConfidence());
+		}
+		
+		if(isNull(query.getLifespan()) || 0 <= query.getLifespan()) {
+			query.setLifespan(getDefaultLifespan());
+		}
+		
+	}
+
+	/**
+	 * @param query
+	 */
+	private static boolean isValidQuery(Query query) throws QueryExecutionBotException {
+		if(query.getSessionId().length() < 10) {
+			throw new QueryExecutionBotException();
+		}
+		return true;
+	}
+	
 }

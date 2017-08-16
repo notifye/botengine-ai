@@ -1,7 +1,5 @@
 package io.notifye.botengine.bots;
 
-import static io.notifye.botengine.bots.BotEngine.*;
-
 import java.util.Objects;
 
 import io.notifye.botengine.action.InteractionAction;

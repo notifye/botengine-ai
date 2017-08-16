@@ -12,6 +12,8 @@ import lombok.Setter;
 
 @AllArgsConstructor
 public abstract class Bot implements TokenMode, DeveloperActions, ClientActions {
+	public static final double DEFAULT_CONFIDENCE = 0.6;
+	public static final int DEFAULT_LIFESPAN = 2;
 	
 	public static final String API_URL = "https://api.botengine.ai"; 
 	

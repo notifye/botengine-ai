@@ -37,16 +37,6 @@ public @Data class ClientBot extends Bot {
 	}
 
 	@Override
-	public StoriesAction stories() throws Exception {
-		throw new BotUnsuportedOperationException("Use Developer Token for this action");
-	}
-
-	@Override
-	public InteractionAction interactions() throws Exception {
-		throw new BotUnsuportedOperationException("Use Developer Token for this action");
-	}
-
-	@Override
 	public QueryAction query(Story story) throws Exception {
 		return new QueryController(story, getToken(), Engine.getSession());
 	}
@@ -56,6 +46,14 @@ public @Data class ClientBot extends Bot {
 		return new QueryController(story, getToken(), session);
 	}
 	
-	
+	@Override
+	public StoriesAction stories() throws Exception {
+		throw new BotUnsuportedOperationException("Use Developer Token for this action");
+	}
+
+	@Override
+	public InteractionAction interactions() throws Exception {
+		throw new BotUnsuportedOperationException("Use Developer Token for this action");
+	}
 
 }
