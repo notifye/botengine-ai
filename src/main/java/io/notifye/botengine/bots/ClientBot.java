@@ -1,12 +1,11 @@
 package io.notifye.botengine.bots;
 
-import static io.notifye.botengine.bots.BotEngine.*;
-
 import io.notifye.botengine.Engine;
 import io.notifye.botengine.action.InteractionAction;
 import io.notifye.botengine.action.QueryAction;
 import io.notifye.botengine.action.StoriesAction;
 import io.notifye.botengine.action.controller.QueryController;
+import io.notifye.botengine.exception.BotException;
 import io.notifye.botengine.exception.BotUnsuportedOperationException;
 import io.notifye.botengine.model.Story;
 import io.notifye.botengine.security.Token;
@@ -47,7 +46,7 @@ public @Data class ClientBot extends Bot {
 	}
 	
 	@Override
-	public StoriesAction stories() throws Exception {
+	public StoriesAction stories() throws BotException {
 		throw new BotUnsuportedOperationException("Use Developer Token for this action");
 	}
 

@@ -32,7 +32,7 @@ public abstract class Bot implements TokenMode, DeveloperActions, ClientActions 
 		return API_URL;
 	}
 	
-	public Bot switchToken(Token token) throws SwitchBotException{
+	public Bot switchToken(Token token) throws SwitchBotException {
 		if(token.equals(this.token)){
 			throw new SwitchBotException("Token must be different from currently used token");
 		}
