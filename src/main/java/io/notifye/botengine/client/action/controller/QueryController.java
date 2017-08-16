@@ -1,11 +1,11 @@
 package io.notifye.botengine.client.action.controller;
 
 import io.notifye.botengine.client.Engine;
-import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.QueryAction;
 import io.notifye.botengine.client.model.Query;
 import io.notifye.botengine.client.model.QueryResponse;
 import io.notifye.botengine.client.model.Story;
+import io.notifye.botengine.client.security.Token;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 

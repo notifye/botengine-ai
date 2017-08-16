@@ -34,6 +34,7 @@ import io.notifye.botengine.client.model.Query;
 import io.notifye.botengine.client.model.QueryResponse;
 import io.notifye.botengine.client.model.ResponseInteraction;
 import io.notifye.botengine.client.model.Story;
+import io.notifye.botengine.client.security.Token;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.notifye.botengine.client.Engine;
-import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.InteractionAction;
 import io.notifye.botengine.client.bots.Bot;
 import io.notifye.botengine.client.exception.BotException;
@@ -16,6 +15,7 @@ import io.notifye.botengine.client.model.Context;
 import io.notifye.botengine.client.model.Context.ReferenceType;
 import io.notifye.botengine.client.model.Interaction;
 import io.notifye.botengine.client.model.enums.InteractionType;
+import io.notifye.botengine.client.security.Token;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,12 +1,11 @@
 package io.notifye.botengine.client.bots;
 
-import io.notifye.botengine.client.BotEngine;
-import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.ClientActions;
 import io.notifye.botengine.client.action.DeveloperActions;
 import io.notifye.botengine.client.exception.SwitchBotException;
 import io.notifye.botengine.client.factory.BotFactory.TokenMode;
 import io.notifye.botengine.client.model.Story;
+import io.notifye.botengine.client.security.Token;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

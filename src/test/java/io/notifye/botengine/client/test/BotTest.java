@@ -9,11 +9,10 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.notifye.botengine.client.BotEngine;
-import io.notifye.botengine.client.BotEngine.TokenType;
-import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.QueryAction;
 import io.notifye.botengine.client.bots.Bot;
+import io.notifye.botengine.client.bots.BotEngine;
+import io.notifye.botengine.client.bots.BotEngine.TokenType;
 import io.notifye.botengine.client.bots.ClientBot;
 import io.notifye.botengine.client.bots.DeveloperBot;
 import io.notifye.botengine.client.model.Entity;
@@ -26,6 +25,7 @@ import io.notifye.botengine.client.model.Story;
 import io.notifye.botengine.client.model.Synonym;
 import io.notifye.botengine.client.model.enums.InteractionType;
 import io.notifye.botengine.client.model.enums.ResponseInteractionType;
+import io.notifye.botengine.client.security.Token;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

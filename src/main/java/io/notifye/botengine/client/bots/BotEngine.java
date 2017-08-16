@@ -1,10 +1,10 @@
-package io.notifye.botengine.client;
+package io.notifye.botengine.client.bots;
 
 import static io.notifye.botengine.client.factory.BotFactory.*;
 
 import java.util.Objects;
 
-import io.notifye.botengine.client.bots.Bot;
+import io.notifye.botengine.client.security.Token;
 
 public class BotEngine {
 	public static final double DEFAULT_CONFIDENCE = 0.6;

@@ -1,10 +1,9 @@
 package io.notifye.botengine.client.bots;
 
+import static io.notifye.botengine.client.bots.BotEngine.*;
+
 import java.util.Objects;
 
-import static io.notifye.botengine.client.BotEngine.*;
-
-import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.InteractionAction;
 import io.notifye.botengine.client.action.QueryAction;
 import io.notifye.botengine.client.action.StoriesAction;
@@ -12,6 +11,7 @@ import io.notifye.botengine.client.action.controller.InteractionsActionControlle
 import io.notifye.botengine.client.action.controller.StoriesActionController;
 import io.notifye.botengine.client.exception.BotUnsuportedOperationException;
 import io.notifye.botengine.client.model.Story;
+import io.notifye.botengine.client.security.Token;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

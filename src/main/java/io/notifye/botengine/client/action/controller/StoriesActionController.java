@@ -3,11 +3,11 @@ package io.notifye.botengine.client.action.controller;
 import java.util.List;
 
 import io.notifye.botengine.client.Engine;
-import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.StoriesAction;
 import io.notifye.botengine.client.bots.Bot;
 import io.notifye.botengine.client.exception.BotException;
 import io.notifye.botengine.client.model.Story;
+import io.notifye.botengine.client.security.Token;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

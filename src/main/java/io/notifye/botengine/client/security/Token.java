@@ -1,7 +1,7 @@
-package io.notifye.botengine.client;
+package io.notifye.botengine.client.security;
 
 
-import io.notifye.botengine.client.BotEngine.TokenType;
+import io.notifye.botengine.client.bots.BotEngine.TokenType;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
