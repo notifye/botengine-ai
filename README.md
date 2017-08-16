@@ -1,4 +1,4 @@
-Botengine.ai Java Client (Under Construction)
+Botengine.ai Java Client
 ===================
 
 A idiomatic way to create chatbots through the BotEngine API 
@@ -33,9 +33,9 @@ To do this in your project start by adding the dependency:
 
 ```xml
 <dependency>
-	<groupId>com.github.notifye</groupId>
-	<artifactId>botengine-ai-client</artifactId>
-	<version>v0.1.2-SNAPSHOT</version>
+  <groupId>com.github.notifye</groupId>
+  <artifactId>botengine-ai-client</artifactId>
+  <version>v0.1.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -43,10 +43,10 @@ Since we use jitpack you should add a new repository in your pom.xml
 
 ```xml
 <repositories>
-	<repository>
-		<id>jitpack.io</id>
-		<url>https://jitpack.io</url>
-	</repository>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
 </repositories>
 ```
 
