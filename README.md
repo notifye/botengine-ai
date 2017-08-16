@@ -1,4 +1,4 @@
-Botengine.ai Java Client (Under Construction)
+Botengine.ai Java Client
 ===================
 
 A idiomatic way to create chatbots through the BotEngine API 
