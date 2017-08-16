@@ -173,7 +173,10 @@ public class BotTest {
 		
 		QueryAction conversation = clientBot.query(developerBot.getStory());
 		
-		QueryResponse queryResponse = conversation.q("the would be great to see LOTR");
+		QueryResponse queryResponse = conversation.q("Hello");
+		assertNotNull(queryResponse);
+		
+		queryResponse = conversation.q("the would be great to see LOTR");
 		assertNotNull(queryResponse);
 		log.info("Query Result -> {}", queryResponse);
 		
