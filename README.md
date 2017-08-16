@@ -179,3 +179,4 @@ More Examples<a name="Examples"></a>
 -------------------
 
 [Movies Reservation](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/BotTest.java)
+[C3PO Simple Chat](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/C3POChatTest.java)

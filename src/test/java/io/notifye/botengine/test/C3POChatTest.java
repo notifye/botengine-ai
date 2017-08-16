@@ -31,7 +31,7 @@ import io.notifye.botengine.security.Token;
  * @author Adriano Santos
  *
  */
-public class C3POChat {
+public class C3POChatTest {
 	
 	private Bot bot;
 	private List<String> c3poResponses;
