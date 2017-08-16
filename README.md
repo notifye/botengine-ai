@@ -35,7 +35,7 @@ To do this in your project start by adding the dependency:
 <dependency>
   <groupId>com.github.notifye</groupId>
   <artifactId>botengine-ai</artifactId>
-  <version>0.1.3-RELEASE</version>
+  <version>0.1.4-RELEASE</version>
 </dependency>
 ```
 
