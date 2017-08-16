@@ -2,6 +2,8 @@ package io.notifye.botengine.client.bots;
 
 import java.util.Objects;
 
+import static io.notifye.botengine.client.BotEngine.*;
+
 import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.InteractionAction;
 import io.notifye.botengine.client.action.QueryAction;
@@ -18,13 +20,17 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode(callSuper = false)
 public @Data class DeveloperBot extends Bot {
-	
 	private StoriesActionController storiesActionController;
 	private InteractionsActionController interactionsActionController;
 	
 	@Builder
 	public DeveloperBot(Token token) {
-		super(token);
+		super(token, DEFAULT_CONFIDENCE, DEFAULT_LIFESPAN);
+	}
+	
+	@Builder
+	public DeveloperBot(Token token, double confidence, int lifespan) {
+		super(token, confidence, lifespan);
 	}
 	
 	@Override

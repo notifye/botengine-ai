@@ -9,6 +9,7 @@ import io.notifye.botengine.client.factory.BotFactory.TokenMode;
 import io.notifye.botengine.client.model.Story;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 @AllArgsConstructor
 public abstract class Bot implements TokenMode, DeveloperActions, ClientActions {
@@ -17,6 +18,12 @@ public abstract class Bot implements TokenMode, DeveloperActions, ClientActions 
 	
 	@Getter
 	private Token token;
+	
+	@Getter @Setter
+	private double confidence;
+	
+	@Getter @Setter
+	private int lifespan;
 	
 	public abstract Story getStory();
 	

@@ -1,5 +1,7 @@
 package io.notifye.botengine.client.bots;
 
+import static io.notifye.botengine.client.BotEngine.*;
+
 import io.notifye.botengine.client.Engine;
 import io.notifye.botengine.client.Token;
 import io.notifye.botengine.client.action.InteractionAction;
@@ -21,7 +23,12 @@ public @Data class ClientBot extends Bot {
 	
 	@Builder
 	public ClientBot(Token token) {
-		super(token);
+		super(token, DEFAULT_CONFIDENCE, DEFAULT_LIFESPAN);
+	}
+	
+	@Builder
+	public ClientBot(Token token, double confidence, int lifespan) {
+		super(token, confidence, lifespan);
 	}
 	
 	@Override
