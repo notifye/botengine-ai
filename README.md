@@ -160,17 +160,15 @@ Relax we have created a method for you to change token;)
 
 ```java
 QueryResponse c3POResponse = bot.switchToken(
-                    Token.builder()
-                           .token(clientToken)
-                    .tokenType(TokenType.CLIENT)
-                    .build())
-                    .query(bot.getStory())
-                           .q("I would like to be a Jedi");
-                      
-c3POResponse.getResult()
-   .getFulfillment().stream().forEach(response -> {
-       System.out.println("C-3PO respond: " + response);
-});
+                Token.builder()
+                       .token(System.getenv("CLIENT_TOKEN"))
+                .tokenType(TokenType.CLIENT)
+                .build())
+                .query(bot.getStory())
+                       .q("I would like to be a Jedi");
+
+		assertNotNull(c3POResponse);
+		c3POResponse.getResult().getFulfillment().stream().forEach(System.out::println);
 ```
 
 **That's it for now! :)**
@@ -179,4 +177,5 @@ More Examples<a name="Examples"></a>
 -------------------
 
 [Movies Reservation](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/BotTest.java)
+
 [C3PO Simple Chat](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/C3POChatTest.java)
