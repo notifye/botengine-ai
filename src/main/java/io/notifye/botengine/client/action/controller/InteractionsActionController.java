@@ -23,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public final @Data class InteractionsActionController implements InteractionAction {
+	
 	private static final long serialVersionUID = 1L;
+	
 	private final String ACTION_NAME = InteractionAction.class.getSimpleName();
 	
 	private final Bot bot;
@@ -65,7 +67,7 @@ public final @Data class InteractionsActionController implements InteractionActi
 	public InteractionAction interaction(Interaction userInteraction) {
 		Objects.requireNonNull(this.interactions, "Please necessary add interactions");
 		Objects.requireNonNull(userInteraction, "Interaction is Mandatory");
-
+		
 		userInteraction.setType(InteractionType.user);
 		this.interactions.add(userInteraction);
 		return this;
@@ -74,27 +76,23 @@ public final @Data class InteractionsActionController implements InteractionActi
 	@Override
 	public InteractionAction referenceById(String interactionIdIn, String interactionIdOut) {
 		// Create context
-		addContext(ReferenceType.BY_ID, interactionIdIn, interactionIdOut, true);
-		return this;
+		return addContext(ReferenceType.BY_ID, interactionIdIn, interactionIdOut, true);
 	}
 
 	@Override
 	public InteractionAction referenceById(String interactionIdIn, String interactionIdOut, boolean root) {
 		// Create context
-		addContext(ReferenceType.BY_ID, interactionIdIn, interactionIdOut, root);
-		return this;
+		return addContext(ReferenceType.BY_ID, interactionIdIn, interactionIdOut, root);
 	}
 
 	@Override
 	public InteractionAction referenceByName(String interactionNameIn, String interactionNameOut) {
-		addContext(ReferenceType.BY_NAME, interactionNameIn, interactionNameOut, true);
-		return this;
+		return addContext(ReferenceType.BY_NAME, interactionNameIn, interactionNameOut, true);
 	}
 
 	@Override
 	public InteractionAction referenceByName(String interactionNameIn, String interactionNameOut, boolean root) {
-		addContext(ReferenceType.BY_NAME, interactionNameIn, interactionNameOut, root);
-		return this;
+		return addContext(ReferenceType.BY_NAME, interactionNameIn, interactionNameOut, root);
 	}
 	
 	@Override
@@ -104,32 +102,6 @@ public final @Data class InteractionsActionController implements InteractionActi
 		createInteractions();
 		createReferences();
 		return this.bot;
-	}
-
-	private void createInteractions() {
-		this.interactions.stream()
-			.forEach(interaction -> {
-				
-				Engine.initializeEmptyProperties(interaction);
-				
-				log.info("Creating Entities...");
-				createEntities(interaction);
-				
-				//CREATE INTERACTION
-				log.debug("Creating Interaction -> {}", interaction);
-				try {
-					Interaction root = Engine.creatInteraction(this.bot.getStory(), interaction, this.token);
-					if(interaction.getChilds() != null && interaction.getChilds().size() > 0 && interaction.getChilds().size() > 0){
-						log.info("Create child entities...");
-						createChilds(interaction, root);
-					}
-				} catch (Exception e) {
-					log.error("Error on create Child interaction", e.getMessage());
-					if(log.isDebugEnabled()) {
-						e.printStackTrace();
-					}
-				}
-			});
 	}
 
 	@Override
@@ -144,6 +116,37 @@ public final @Data class InteractionsActionController implements InteractionActi
 
 	public Token getToken() {
 		return token;
+	}
+	
+	private void createInteractions() {
+		this.interactions.stream()
+			.forEach(interaction -> {
+				
+				Engine.initializeEmptyProperties(interaction);
+				
+				log.info("Creating Entities...");
+				createEntities(interaction);
+				
+				//CREATE INTERACTION
+				log.debug("Creating Interaction -> {}", interaction);
+				try {
+					Interaction root = Engine.creatInteraction(this.bot.getStory(), interaction, this.token);
+					
+					if(isHaveChildren(interaction)){
+						log.info("Create child entities...");
+						createChilds(interaction, root);
+					}
+				} catch (Exception e) {
+					log.error("Error on create Child interaction", e.getMessage());
+					if(log.isDebugEnabled()) {
+						e.printStackTrace();
+					}
+				}
+			});
+	}
+
+	private boolean isHaveChildren(Interaction interaction) {
+		return interaction.getChilds() != null && interaction.getChilds().size() > 0 && interaction.getChilds().size() > 0;
 	}
 	
 	private void createChilds(Interaction interaction, Interaction root) {
@@ -171,7 +174,7 @@ public final @Data class InteractionsActionController implements InteractionActi
 		});
 	}
 	
-	private void addContext(ReferenceType referenceType, String interactionIdIn, String interactionIdOut, boolean root) {
+	private InteractionAction addContext(ReferenceType referenceType, String interactionIdIn, String interactionIdOut, boolean root) {
 		Context ctx = Context.builder()
 				.id(interactionIdIn)
 				.referenceType(referenceType)
@@ -180,6 +183,7 @@ public final @Data class InteractionsActionController implements InteractionActi
 				.root(root)
 				.build();
 		contexts.add(ctx);
+		return this;
 	}
 
 }

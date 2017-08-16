@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -36,10 +34,10 @@ import io.notifye.botengine.client.model.Query;
 import io.notifye.botengine.client.model.QueryResponse;
 import io.notifye.botengine.client.model.ResponseInteraction;
 import io.notifye.botengine.client.model.Story;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class Engine {
-	private static final Logger log = LoggerFactory.getLogger(Engine.class);
-	
 	private static final String STORIES_RESOURCE = "%s/stories";
 	private static final String STORY_RESOURCE = "%s/stories/%s";
 	private static final String REFERENCE_RESOURCE = STORY_RESOURCE + "/contexts";
@@ -61,7 +59,7 @@ public final class Engine {
 			
 			ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.GET, entity, String.class);
 			
-			if(response.getStatusCode().is2xxSuccessful()){
+			if(isSuccessful(response)){
 				log.debug("Get Story result -> {}", response);
 				JsonNode node = getObjectMapper().readValue(response.getBody(), JsonNode.class);
 				JsonNode idNode = node.get("id");
@@ -81,33 +79,17 @@ public final class Engine {
 	}
 	
 	public static Story createStory(Story story, Token token) throws BotException{
-		String uri = getRootStoryUriResource();
 		log.info("Create Story with type -> {}", story);
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Story> request = new HttpEntity<>(story, headers);
+		ResponseEntity<String> response = post(getRootStoryUriResource(), request); 
 
-		ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.POST, request, String.class);
-
-		if(response.getStatusCode().is2xxSuccessful()){
-			//get
-			JsonNode node;
-			try {
-				String body = response.getBody();
-				log.debug("Response body -> {}", body);
-				node = getObjectMapper().readValue(body, JsonNode.class);
-				JsonNode idNode = node.get("id");
-				
-				//TODO: Validate npe exception
-				String id = idNode.asText();
-				story.setId(id);
-				log.debug("Create Story result -> {}", story);
-			} catch (IOException e) {
-				throw new BotException(e);
-			}
+		if(isSuccessful(response)){
+			updateStoryEntity(story, response);
 		}
 		return story;
 	}
-	
+
 	public static void deleteStory(String id, Token token) {
 		String uri = getStoryUriResourceById(id);
 		log.debug("Delete Story by Id -> {}", id);
@@ -115,7 +97,7 @@ public final class Engine {
 		HttpEntity<Story> request = new HttpEntity<>(headers);
 		
 		ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.DELETE, request, String.class);
-		if(response.getStatusCode().is2xxSuccessful()){
+		if(isSuccessful(response)){
 			//get
 			log.debug("Removed Story result -> {}", response);
 		}
@@ -139,41 +121,42 @@ public final class Engine {
 		final String INTERACTION_URI_RESOURCE = String.format(INTERACTIONS_RESOURCE, Bot.API_URL, story.getId());
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Interaction> request = new HttpEntity<>(interaction, headers);
+		ResponseEntity<String> response = post(INTERACTION_URI_RESOURCE, request);
 		
-		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.POST, request, String.class);
 		log.debug("Interaction Response -> {}", response);
-		if(response.getStatusCode().is2xxSuccessful()){
+		if(isSuccessful(response)){
 			log.debug("Interactions created suscessfull");
-			JsonNode node;
-			try {
-				node = getObjectMapper().readValue(response.getBody(), JsonNode.class);
-				JsonNode idNode = node.get("id");
-				JsonNode nameNode = node.get("name");
-				JsonNode descriptionNode = node.get("description");
-				interaction.setId(idNode.asText());
-			} catch (IOException e) {
-				log.error("Error on get Id of interaction", e);
-				if(log.isDebugEnabled()) {
-					e.printStackTrace();
-				}
-				throw new BotException("Error on get Id of interaction", e);
-			}
-			
+			updateInteractionEntity(interaction, response);
 		}
 		return interaction;
 	}
-	
+
+	public static Interaction createChildInteraction(Story story, Interaction root, Interaction child, Token token) throws BotException{
+		final String INTERACTION_CTX_URI_RESOURCE = String.format(INTERACTIONS_CTX_RESOURCE, Bot.API_URL, story.getId(), root.getId());
+		HttpHeaders headers = getDevHeaders(token);
+		
+		initializeEmptyProperties(child);
+		HttpEntity<Interaction> request = new HttpEntity<>(child, headers);
+		ResponseEntity<String> response = post(INTERACTION_CTX_URI_RESOURCE, request);
+
+		log.debug("Interaction Response -> {}", response);
+		if(isSuccessful(response)){
+			log.debug("Interactions created suscessfull");
+			updateChildInteractionEntity(root, child, response);
+		}
+		return root;
+	}
+
 	public static Interaction createOrUpdateWelcomeMessage(Story story, Interaction interaction, Token token){
 		final String INTERACTION_URI_RESOURCE = String.format(WELCOME_RESOURCE, Bot.API_URL, story.getId());
 		HttpHeaders headers = getDevHeaders(token);
 		
 		WelcomeMessageWrapper welcomeMessage = new WelcomeMessageWrapper(interaction.getResponses());
-		
 		HttpEntity<WelcomeMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
-		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
+		ResponseEntity<String> response = put(INTERACTION_URI_RESOURCE, request);
 		log.debug("Interaction Response -> {}", response);
-		if(response.getStatusCode().is2xxSuccessful()){
+		if(isSuccessful(response)){
 			log.debug("Interactions created suscessfull");
 		}
 		return interaction;
@@ -184,47 +167,14 @@ public final class Engine {
 		HttpHeaders headers = getDevHeaders(token);
 		
 		FallbackMessageWrapper welcomeMessage = new FallbackMessageWrapper(interaction.getResponses());
-		
 		HttpEntity<FallbackMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
-		ResponseEntity<String> response = getClient().exchange(INTERACTION_URI_RESOURCE, HttpMethod.PUT, request, String.class);
+		ResponseEntity<String> response = put(INTERACTION_URI_RESOURCE, request);
 		log.debug("Interaction Response -> {}", response);
-		if(response.getStatusCode().is2xxSuccessful()){
+		if(isSuccessful(response)){
 			log.debug("Interactions created suscessfull");
 		}
 		return interaction;
-	}
-	
-	public static Interaction createChildInteraction(Story story, Interaction root, Interaction child, Token token) throws BotException{
-		final String INTERACTION_CTX_URI_RESOURCE = String.format(INTERACTIONS_CTX_RESOURCE, Bot.API_URL, story.getId(), root.getId());
-		HttpHeaders headers = getDevHeaders(token);
-		
-		initializeEmptyProperties(child);
-		HttpEntity<Interaction> request = new HttpEntity<>(child, headers);
-		
-		ResponseEntity<String> response = getClient().exchange(INTERACTION_CTX_URI_RESOURCE, HttpMethod.POST, request, String.class);
-		log.debug("Interaction Response -> {}", response);
-		if(response.getStatusCode().is2xxSuccessful()){
-			log.debug("Interactions created suscessfull");
-			JsonNode node;
-			try {
-				node = getObjectMapper().readValue(response.getBody(), JsonNode.class);
-				JsonNode idNode = node.get("id");
-				JsonNode nameNode = node.get("name");
-				JsonNode descriptionNode = node.get("description");
-				root.getChilds().remove(child);
-				child.setId(idNode.asText());
-				root.getChilds().add(child);
-				log.debug("Create Child Interaction suscessfully. \n\tRoot -> {}. \n\tChild -> {}", root, child);
-			} catch (IOException e) {
-				log.error("Error on get Id of interaction", e);
-				if(log.isDebugEnabled()) {
-					e.printStackTrace();
-				}
-				throw new BotException("Error on get Id of interaction", e);
-			}
-		}
-		return root;
 	}
 	
 	public static void createReference(Story story, List<Interaction> interactions, Token token, Context context) {
@@ -240,9 +190,9 @@ public final class Engine {
 		}
 		
 		HttpEntity<List<Context>> request = new HttpEntity<>(Arrays.asList(context), headers);
-		ResponseEntity<String> response = getClient().exchange(REFERENCE_URI_RESOURCE, HttpMethod.PUT, request, String.class);
+		ResponseEntity<String> response = put(REFERENCE_URI_RESOURCE, request);
 		log.debug("Referenced Response -> {}", response);
-		if(response.getStatusCode().is2xxSuccessful()){
+		if(isSuccessful(response)){
 			log.debug("Referenced created suscessfull");
 		}
 	}
@@ -280,10 +230,10 @@ public final class Engine {
 		
 		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Entity> request = new HttpEntity<>(entity, headers);
-		
-		ResponseEntity<String> entityResponse = getClient().exchange(ENTITY_URI_RESOURCE, HttpMethod.POST, request, String.class);
+		ResponseEntity<String> entityResponse = post(ENTITY_URI_RESOURCE, request);
+
 		log.info("Entity response -> {}", entityResponse);
-		if(entityResponse.getStatusCode().is2xxSuccessful()){
+		if(isSuccessful(entityResponse)){
 			log.info("Entity created suscessfull");
 		}
 		return entity;
@@ -315,6 +265,64 @@ public final class Engine {
 	
 	private static int getDefaultLifespan() {
 		return 2;
+	}
+	
+	private static boolean isSuccessful(ResponseEntity<String> response) {
+		return response.getStatusCode().is2xxSuccessful();
+	}
+
+	private static void updateStoryEntity(Story story, ResponseEntity<String> response) throws BotException {
+		JsonNode node;
+		try {
+			String body = response.getBody();
+			log.debug("Response body -> {}", body);
+			node = getObjectMapper().readValue(body, JsonNode.class);
+			JsonNode idNode = node.get("id");
+			
+			//TODO: Validate npe exception
+			String id = idNode.asText();
+			if(id == null || id.isEmpty()) {
+				throw new BotException("Error on create Story.");
+			}
+			story.setId(id);
+			log.debug("Create Story result -> {}", story);
+		} catch (IOException e) {
+			throw new BotException(e);
+		}
+	}
+
+	
+	@SuppressWarnings("unused")
+	private static void updateInteractionEntity(Interaction interaction, ResponseEntity<String> response) throws BotException {
+		JsonNode node;
+		try {
+			node = getObjectMapper().readValue(response.getBody(), JsonNode.class);
+			JsonNode idNode = node.get("id");
+			JsonNode nameNode = node.get("name");
+			JsonNode descriptionNode = node.get("description");
+			interaction.setId(idNode.asText());
+		} catch (IOException e) {
+			log.error("Error on get Id of interaction", e);
+			if(log.isDebugEnabled()) {
+				e.printStackTrace();
+			}
+			throw new BotException("Error on get Id of interaction", e);
+		}
+	}
+	
+	private static void updateChildInteractionEntity(Interaction root, Interaction child, ResponseEntity<String> response) throws BotException {
+		try {
+			updateInteractionEntity(child, response);
+			root.getChilds().remove(child);
+			root.getChilds().add(child);
+			log.debug("Create Child Interaction suscessfully. \n\tRoot -> {}. \n\tChild -> {}", root, child);
+		} catch (Exception e) {
+			log.error("Error on get Id of interaction", e);
+			if(log.isDebugEnabled()) {
+				e.printStackTrace();
+			}
+			throw new BotException("Error on get Id of interaction", e);
+		}
 	}
 	
 	private static void setContextIds(List<Interaction> interactions, Context context) {
@@ -412,6 +420,14 @@ public final class Engine {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 		return mapper;
+	}
+	
+	private static ResponseEntity<String> put(String url, HttpEntity<?> entity) {
+		return getClient().exchange(url, HttpMethod.PUT, entity, String.class);
+	}
+	
+	private static ResponseEntity<String> post(String url, HttpEntity<?> entity) {
+		return getClient().exchange(url, HttpMethod.POST, entity, String.class);
 	}
 	
 	public static final class WelcomeMessageWrapper {
