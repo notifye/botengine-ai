@@ -178,4 +178,4 @@ c3POResponse.getResult()
 More Examples<a name="Examples"></a>
 -------------------
 
-[Movies Reservation](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/client/test/BotTest.java)
+[Movies Reservation](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/BotTest.java)
