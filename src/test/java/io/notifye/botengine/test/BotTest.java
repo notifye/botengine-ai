@@ -11,10 +11,9 @@ import org.junit.Test;
 
 import io.notifye.botengine.action.QueryAction;
 import io.notifye.botengine.bots.Bot;
-import io.notifye.botengine.bots.BotEngine;
+import io.notifye.botengine.bots.BotEngine.TokenType;
 import io.notifye.botengine.bots.ClientBot;
 import io.notifye.botengine.bots.DeveloperBot;
-import io.notifye.botengine.bots.BotEngine.TokenType;
 import io.notifye.botengine.model.Entity;
 import io.notifye.botengine.model.Entry;
 import io.notifye.botengine.model.Interaction;
@@ -30,22 +29,13 @@ import io.notifye.botengine.security.Token;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BotTest {
-	private static String devAccessToken = System.getenv("DEV_TOKEN");
-	private static String clientAccessToken = System.getenv("CLIENT_TOKEN");
+public class BotTest extends AbstractBotTest {
 	
-	private Bot developerBot;
 	private Entry lordOfTheRingsEntry;
 	private Entry startWarsEntry;
 	
-	private List<String> okResponses = Arrays.asList("Your reservation on $movies has been confirmed");
-	private List<String> fallbackResponses = Arrays.asList(
-							"I do not understand, could you repeat?", 
-							"Please repeat", 
-							"Excuse me, I'm still learning to understand humans. Could you please repeat what I said?", 
-							"Damn, you're already fucking pissing me off.", 
-							"I think I'm too stupid to understand you.",
-							"Come on, help me. Try it another way!");
+	private List<String> okResponses;
+	private List<String> fallbackResponses;
 	
 	@Before
 	public void setup() throws Exception {
@@ -65,33 +55,39 @@ public class BotTest {
 						Synonym.builder().value("Stars Wars").build()))
 				.build();
 		
-		// Configure Bot
-		developerBot = BotEngine.ai(
-				Token.builder()
-					.token(devAccessToken)
-					.tokenType(TokenType.DEV)
-					.build())
-				.stories()
-				.create(Story.builder()
-						.name("Movies reservation")
-						.description("Movies reservation")
-						.build())
-				//.del()
-				.bot();
+		//Configure Bot
+		super.setup();
+		
+	}
+	
+	@Override
+	public Story createStory() {
+		return Story.builder()
+				.name("Movies reservation")
+				.description("Movies reservation")
+				.build();
+	}
+	
+	@Override
+	public Token createToken() {
+		return Token.builder()
+				.token(devAccessToken)
+				.tokenType(TokenType.DEV)
+				.build();
 	}
 	
 	//@After
 	public void after() throws Exception{
-		developerBot.stories().del();
+		bot.stories().del();
 	}
 	
 	@Test
 	public void botTest() throws Exception {
-		assertNotNull(developerBot);
-		assertThat(developerBot)
-			.describedAs("Bot is DeveloperBot instance").isInstanceOf(DeveloperBot.class);
+		assertNotNull(bot);
+		assertThat(bot)
+			.describedAs("Bot is bot instance").isInstanceOf(DeveloperBot.class);
 		
-		developerBot.interactions()
+		bot.interactions()
 				.add()
 					.welcome(Interaction.builder()
 						.name("welcome interaction")
@@ -163,7 +159,7 @@ public class BotTest {
 				.build();
 		
 		// Switch Execution Mode and execute some query
-		Bot clientBot = developerBot.switchToken(
+		Bot clientBot = bot.switchToken(
 			Token.builder()
 				.token(clientAccessToken)
 				.tokenType(TokenType.CLIENT)
@@ -173,7 +169,7 @@ public class BotTest {
 		assertThat(clientBot)
 			.describedAs("Bot is ClientBot instance").isInstanceOf(ClientBot.class);
 		
-		QueryAction conversation = clientBot.query(developerBot.getStory());
+		QueryAction conversation = clientBot.query(bot.getStory());
 		
 		QueryResponse queryResponse = conversation.q("Hello");
 		assertNotNull(queryResponse);
@@ -186,7 +182,7 @@ public class BotTest {
 		queryResponse = conversation.q(
 				Query.builder()
 					.sessionId("12345678910")
-					.storyId(developerBot.getStory().getId())
+					.storyId(bot.getStory().getId())
 					.confidence(Bot.DEFAULT_CONFIDENCE) // or not set and leave defaults
 					.lifespan(Bot.DEFAULT_LIFESPAN)     // or not set and leave defaults
 					.trigger("hello")
@@ -199,6 +195,22 @@ public class BotTest {
 		fallbackResponse = conversation.q("I did not understand!!");
 		assertNotNull(fallbackResponse);
 		log.info("Fallback 2 Query Result -> {}", fallbackResponse);
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see io.notifye.botengine.test.AbstractBotTest#createMessages()
+	 */
+	@Override
+	public void createMessages() {
+		okResponses = Arrays.asList("Your reservation on $movies has been confirmed");
+		fallbackResponses = Arrays.asList(
+								"I do not understand, could you repeat?", 
+								"Please repeat", 
+								"Excuse me, I'm still learning to understand humans. Could you please repeat what I said?", 
+								"Damn, you're already fucking pissing me off.", 
+								"I think I'm too stupid to understand you.",
+								"Come on, help me. Try it another way!");
 		
 	}
 

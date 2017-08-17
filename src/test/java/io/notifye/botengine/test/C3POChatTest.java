@@ -7,13 +7,10 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import io.notifye.botengine.bots.Bot;
-import io.notifye.botengine.bots.BotEngine;
 import io.notifye.botengine.bots.BotEngine.TokenType;
 import io.notifye.botengine.model.Entity;
 import io.notifye.botengine.model.Entry;
@@ -31,30 +28,36 @@ import io.notifye.botengine.security.Token;
  * @author Adriano Santos
  *
  */
-public class C3POChatTest {
+public class C3POChatTest extends AbstractBotTest {
 	
-	private Bot bot;
 	private List<String> c3poResponses;
 	private List<String> c3poFallbackResponses;
 	
 	@Before
 	public void setup() throws Exception {
-		// Create instance of Bot
-		if(Objects.isNull(bot)) {
-			bot = BotEngine.ai(Token.builder()
-	                .token(System.getenv("DEV_TOKEN"))
-	                .tokenType(TokenType.DEV)
-	                .build())
-				  .stories()
-				    .create(Story.builder()
-				    	.name("C-3PO")
-				        .description("See-Threepio Dialogues")
-				        .build())
-				   .bot();
-			
-			//NOW CREATE SOME MESSAGES
-			createMessages();
-		}
+		super.setup();
+	}
+	
+	/* (non-Javadoc)
+	 * @see io.notifye.botengine.test.AbstractBotTest#createStory()
+	 */
+	@Override
+	public Story createStory() {
+		return Story.builder()
+		    	.name("C-3PO")
+		        .description("See-Threepio Dialogues")
+		        .build();
+	}
+
+	/* (non-Javadoc)
+	 * @see io.notifye.botengine.test.AbstractBotTest#createToken()
+	 */
+	@Override
+	public Token createToken() {
+		return Token.builder()
+                .token(devAccessToken)
+                .tokenType(TokenType.DEV)
+                .build();
 	}
 	
 	@Test
@@ -124,7 +127,8 @@ public class C3POChatTest {
 		c3POResponse.getResult().getFulfillment().stream().forEach(System.out::println);
 	}
 	
-	private void createMessages() {
+	@Override
+	public void createMessages() {
 		c3poResponses = Arrays.asList(
                 "I suggest a new strategy, Artoo: let the Wookie win",
                 "Sir, it's very possible this asteroid is not stable",
@@ -138,6 +142,5 @@ public class C3POChatTest {
                 "R2D2! You know better than to trust a strange computer!");
 		
 	}
-	
 
 }
