@@ -39,5 +39,4 @@ public abstract class AbstractBotTest {
 	 */
 	public abstract Token createToken();
 	
-
 }
