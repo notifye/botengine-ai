@@ -35,7 +35,7 @@ To do this in your project start by adding the dependency:
 <dependency>
   <groupId>com.github.notifye</groupId>
   <artifactId>botengine-ai</artifactId>
-  <version>0.1.4-RELEASE</version>
+  <version>0.1.5-RELEASE</version>
 </dependency>
 ```
 
@@ -175,7 +175,6 @@ QueryResponse c3POResponse = bot.switchToken(
 
 More Examples<a name="Examples"></a>
 -------------------
+[C3PO Simple Chat](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/C3POChatTest.java)
 
 [Movies Reservation](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/BotTest.java)
-
-[C3PO Simple Chat](https://github.com/notifye/botengine-ai-client/blob/master/src/test/java/io/notifye/botengine/test/C3POChatTest.java)
