@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class RewritePropertiesRequestInterceptor implements ClientHttpRequestInterceptor {
+	private static final String QUICKREPLY_ROOT_PATTERN = "\"quickReply\":{";
+	private static final String QUICKREPLY_FINAL_PATTERN = "\"]}}]";
 
 	@Override
 	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
@@ -23,11 +25,11 @@ public class RewritePropertiesRequestInterceptor implements ClientHttpRequestInt
 
 	private String rewriteIfRootQuickReplyFound(String requestBody) {
 		String request = requestBody;
-		if(request.contains("\"quickReply\":{\"")) {
+		if(request.contains(QUICKREPLY_ROOT_PATTERN)) {
 			log.debug("Request Body before rewrite -> {}", requestBody);
 			log.debug("Match string to  rewrite");
-			request = request.replace("\"quickReply\":{", "");
-			request = request.replace("\"]}}]", "\"]}]");
+			request = request.replace(QUICKREPLY_ROOT_PATTERN, "");
+			request = request.replace(QUICKREPLY_FINAL_PATTERN, "\"]}]");
 			log.debug("Request Body after rewrite -> {}", request);
 		}
 		return request;
