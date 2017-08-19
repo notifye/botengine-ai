@@ -88,7 +88,7 @@ public class StoryRepositoryImpl implements StoryRepository {
 		HttpEntity<Story> request = new HttpEntity<>(headers);
 		
 		ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.DELETE, request, String.class);
-		if(HttpClient.isSuccessful(response)){
+		if(isSuccessful(response)){
 			log.debug("Removed Story result -> {}", response);
 		}
 	}
