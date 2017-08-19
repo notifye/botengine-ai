@@ -1,7 +1,6 @@
 package io.notifye.botengine;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -10,25 +9,15 @@ import java.util.Optional;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.notifye.botengine.bots.Bot;
 import io.notifye.botengine.exception.BotException;
 import io.notifye.botengine.exception.QueryExecutionBotException;
-import io.notifye.botengine.interceptor.LoggingRequestInterceptor;
-import io.notifye.botengine.interceptor.RewritePropertiesRequestInterceptor;
 import io.notifye.botengine.model.Context;
 import io.notifye.botengine.model.Entity;
 import io.notifye.botengine.model.Interaction;
@@ -36,7 +25,11 @@ import io.notifye.botengine.model.Query;
 import io.notifye.botengine.model.QueryResponse;
 import io.notifye.botengine.model.ResponseInteraction;
 import io.notifye.botengine.model.Story;
+import io.notifye.botengine.model.parsers.ParserUtil;
+import io.notifye.botengine.repository.StoryRepository;
+import io.notifye.botengine.repository.impl.StoryRepositoryImpl;
 import io.notifye.botengine.security.Token;
+import io.notifye.botengine.util.HttpClient;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -50,60 +43,20 @@ public final class Engine {
 	private static final String FALLBACK_RESOURCE = INTERACTIONS_RESOURCE + "/fallback";
 	private static final String QUERY_RESOURCE = "%s/query";
 	
-	private static RestTemplate client;
-	
 	// Stories
 	public static Story getStory(String id, Token token) throws BotException{
-		Story story = null;
-		String uri = getStoryUriResourceById(id);
-		try{
-			HttpHeaders headers = getDevHeaders(token);
-			HttpEntity<String> entity = new HttpEntity<>(headers);
-			
-			ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.GET, entity, String.class);
-			
-			if(isSuccessful(response)){
-				log.debug("Get Story result -> {}", response);
-				JsonNode node = getObjectMapper().readValue(response.getBody(), JsonNode.class);
-				JsonNode idNode = node.get("id");
-				JsonNode nameNode = node.get("name");
-				JsonNode descriptionNode = node.get("description");
-				story = Story.builder()
-						.id(idNode.asText())
-						.name(nameNode.asText())
-						.description(descriptionNode.asText())
-						.build();
-			}
-		}catch(Exception e){
-			throw new BotException(e);
-		}
-		
-		return story;
+		StoryRepository storyRepository = new StoryRepositoryImpl(token);
+		return storyRepository.getStory(id);
 	}
-	
+
 	public static Story createStory(Story story, Token token) throws BotException{
-		log.info("Create Story with type -> {}", story);
-		HttpHeaders headers = getDevHeaders(token);
-		HttpEntity<Story> request = new HttpEntity<>(story, headers);
-		ResponseEntity<String> response = post(getRootStoryUriResource(), request); 
-
-		if(isSuccessful(response)){
-			updateStoryEntity(story, response);
-		}
-		return story;
+		StoryRepository storyRepository = new StoryRepositoryImpl(token);
+		return storyRepository.create(story);
 	}
 
-	public static void deleteStory(String id, Token token) {
-		String uri = getStoryUriResourceById(id);
-		log.debug("Delete Story by Id -> {}", id);
-		HttpHeaders headers = getDevHeaders(token);
-		HttpEntity<Story> request = new HttpEntity<>(headers);
-		
-		ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.DELETE, request, String.class);
-		if(isSuccessful(response)){
-			//get
-			log.debug("Removed Story result -> {}", response);
-		}
+	public static void deleteStory(String id, Token token) throws BotException {
+		StoryRepository storyRepository = new StoryRepositoryImpl(token);
+		storyRepository.del(id);
 	}
 	
 	//Interactions
@@ -122,12 +75,12 @@ public final class Engine {
 	
 	public static Interaction createUserInteraction(Story story, Interaction interaction, Token token) throws BotException{
 		final String INTERACTION_URI_RESOURCE = String.format(INTERACTIONS_RESOURCE, Bot.API_URL, story.getId());
-		HttpHeaders headers = getDevHeaders(token);
+		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		HttpEntity<Interaction> request = new HttpEntity<>(interaction, headers);
-		ResponseEntity<String> response = post(INTERACTION_URI_RESOURCE, request);
+		ResponseEntity<String> response = HttpClient.post(INTERACTION_URI_RESOURCE, request);
 		
 		log.debug("Interaction Response -> {}", response);
-		if(isSuccessful(response)){
+		if(HttpClient.isSuccessful(response)){
 			log.debug("Interactions created suscessfull");
 			updateInteractionEntity(interaction, response);
 		}
@@ -136,14 +89,14 @@ public final class Engine {
 
 	public static Interaction createChildInteraction(Story story, Interaction root, Interaction child, Token token) throws BotException{
 		final String INTERACTION_CTX_URI_RESOURCE = String.format(INTERACTIONS_CTX_RESOURCE, Bot.API_URL, story.getId(), root.getId());
-		HttpHeaders headers = getDevHeaders(token);
+		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		
 		initializeEmptyProperties(child);
 		HttpEntity<Interaction> request = new HttpEntity<>(child, headers);
-		ResponseEntity<String> response = post(INTERACTION_CTX_URI_RESOURCE, request);
+		ResponseEntity<String> response = HttpClient.post(INTERACTION_CTX_URI_RESOURCE, request);
 
 		log.debug("Interaction Response -> {}", response);
-		if(isSuccessful(response)){
+		if(HttpClient.isSuccessful(response)){
 			log.debug("Interactions created suscessfull");
 			updateChildInteractionEntity(root, child, response);
 		}
@@ -152,14 +105,14 @@ public final class Engine {
 
 	public static Interaction createOrUpdateWelcomeMessage(Story story, Interaction interaction, Token token){
 		final String INTERACTION_URI_RESOURCE = String.format(WELCOME_RESOURCE, Bot.API_URL, story.getId());
-		HttpHeaders headers = getDevHeaders(token);
+		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		
 		WelcomeMessageWrapper welcomeMessage = new WelcomeMessageWrapper(interaction.getResponses());
 		HttpEntity<WelcomeMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
-		ResponseEntity<String> response = put(INTERACTION_URI_RESOURCE, request);
+		ResponseEntity<String> response = HttpClient.put(INTERACTION_URI_RESOURCE, request);
 		log.debug("Interaction Response -> {}", response);
-		if(isSuccessful(response)){
+		if(HttpClient.isSuccessful(response)){
 			log.debug("Interactions created suscessfull");
 		}
 		return interaction;
@@ -167,14 +120,14 @@ public final class Engine {
 	
 	public static Interaction createOrUpdateFalbackInteraction(Story story, Interaction interaction, Token token){
 		final String INTERACTION_URI_RESOURCE = String.format(FALLBACK_RESOURCE, Bot.API_URL, story.getId());
-		HttpHeaders headers = getDevHeaders(token);
+		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		
 		FallbackMessageWrapper welcomeMessage = new FallbackMessageWrapper(interaction.getResponses());
 		HttpEntity<FallbackMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
 		
-		ResponseEntity<String> response = put(INTERACTION_URI_RESOURCE, request);
+		ResponseEntity<String> response = HttpClient.put(INTERACTION_URI_RESOURCE, request);
 		log.debug("Interaction Response -> {}", response);
-		if(isSuccessful(response)){
+		if(HttpClient.isSuccessful(response)){
 			log.debug("Interactions created suscessfull");
 		}
 		return interaction;
@@ -182,7 +135,7 @@ public final class Engine {
 	
 	public static void createReference(Story story, List<Interaction> interactions, Token token, Context context) {
 		final String REFERENCE_URI_RESOURCE = String.format(REFERENCE_RESOURCE, Bot.API_URL, story.getId());
-		HttpHeaders headers = getDevHeaders(token);
+		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		
 		switch (context.getReferenceType()) {
 		case BY_NAME:
@@ -193,9 +146,9 @@ public final class Engine {
 		}
 		
 		HttpEntity<List<Context>> request = new HttpEntity<>(Arrays.asList(context), headers);
-		ResponseEntity<String> response = put(REFERENCE_URI_RESOURCE, request);
+		ResponseEntity<String> response = HttpClient.put(REFERENCE_URI_RESOURCE, request);
 		log.debug("Referenced Response -> {}", response);
-		if(isSuccessful(response)){
+		if(HttpClient.isSuccessful(response)){
 			log.debug("Referenced created suscessfull");
 		}
 	}
@@ -230,12 +183,12 @@ public final class Engine {
 		final String ENTITY_URI_RESOURCE = String.format("%s/entities", Bot.API_URL);
 		log.debug("Post Entity with URI -> {}", ENTITY_URI_RESOURCE);
 		
-		HttpHeaders headers = getDevHeaders(token);
+		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		HttpEntity<Entity> request = new HttpEntity<>(entity, headers);
-		ResponseEntity<String> entityResponse = post(ENTITY_URI_RESOURCE, request);
+		ResponseEntity<String> entityResponse = HttpClient.post(ENTITY_URI_RESOURCE, request);
 
 		log.info("Entity response -> {}", entityResponse);
-		if(isSuccessful(entityResponse)){
+		if(HttpClient.isSuccessful(entityResponse)){
 			log.info("Entity created suscessfull");
 		}
 		return entity;
@@ -273,36 +226,11 @@ public final class Engine {
 		return Bot.DEFAULT_CONFIDENCE;
 	}
 	
-	private static boolean isSuccessful(ResponseEntity<String> response) {
-		return response.getStatusCode().is2xxSuccessful();
-	}
-
-	private static void updateStoryEntity(Story story, ResponseEntity<String> response) throws BotException {
-		JsonNode node;
-		try {
-			String body = response.getBody();
-			log.debug("Response body -> {}", body);
-			node = getObjectMapper().readValue(body, JsonNode.class);
-			JsonNode idNode = node.get("id");
-			
-			//TODO: Validate npe exception
-			String id = idNode.asText();
-			if(id == null || id.isEmpty()) {
-				throw new BotException("Error on create Story.");
-			}
-			story.setId(id);
-			log.debug("Create Story result -> {}", story);
-		} catch (IOException e) {
-			throw new BotException(e);
-		}
-	}
-
-	
 	@SuppressWarnings("unused")
 	private static void updateInteractionEntity(Interaction interaction, ResponseEntity<String> response) throws BotException {
 		JsonNode node;
 		try {
-			node = getObjectMapper().readValue(response.getBody(), JsonNode.class);
+			node = ParserUtil.getJsonParser().readValue(response.getBody(), JsonNode.class);
 			JsonNode idNode = node.get("id");
 			JsonNode nameNode = node.get("name");
 			JsonNode descriptionNode = node.get("description");
@@ -438,30 +366,22 @@ public final class Engine {
 	}
 
 	
-	private static String getRootStoryUriResource(){
-		return String.format(STORIES_RESOURCE, Bot.API_URL);
-	}
-	
-	private static String getStoryUriResourceById(String id){
-		return String.format(STORY_RESOURCE, Bot.API_URL, id);
-	}
-	
 	private static QueryResponse q(Query query, Token token) throws QueryExecutionBotException{
 		final String ENTITY_URI_RESOURCE = String.format(QUERY_RESOURCE, Bot.API_URL);
 		QueryResponse response = null;
-		HttpHeaders headers = getDevHeaders(token);
+		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		HttpEntity<Query> request = new HttpEntity<>(query, headers);
 		
 		if(isValidQuery(query)) {
 			initializeQueryDefaults(query);
 			
 			try {
-				ResponseEntity<String> entityResponse =  post(ENTITY_URI_RESOURCE, request);
+				ResponseEntity<String> entityResponse =  HttpClient.post(ENTITY_URI_RESOURCE, request);
 				log.debug("Entity response -> {}", entityResponse);
 				
 				if(entityResponse.getStatusCode().is2xxSuccessful()){
 					log.info("Query executed suscessfull");
-					response = getObjectMapper().readValue(entityResponse.getBody(), QueryResponse.class);
+					response = ParserUtil.getJsonParser().readValue(entityResponse.getBody(), QueryResponse.class);
 				}
 			} catch (IOException e) {
 				log.error("Error on execute query", e.getMessage());
@@ -472,52 +392,6 @@ public final class Engine {
 		}
 		
 		return response;
-	}
-
-	private static HttpHeaders getDevHeaders(Token token){
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Accept", "text/plain");
-		headers.add("authorization", String.format("Bearer %s", token.getToken()));
-		return headers;
-	}
-	
-	private static RestTemplate getClient(){
-		if(Objects.isNull(client)){
-			client = new RestTemplate();
-			List<HttpMessageConverter<?>> converters = new ArrayList<>();
-			MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-			converters.add(new StringHttpMessageConverter());
-			converters.add(converter);
-			converter.setObjectMapper(getObjectMapper());
-	
-			client.setMessageConverters(converters);
-			client.setInterceptors(getRequestInterceptors());
-			return client;
-		}
-		return client;
-	}
-	
-	private static List<ClientHttpRequestInterceptor> getRequestInterceptors(){
-		RewritePropertiesRequestInterceptor rewriterRequest = new RewritePropertiesRequestInterceptor();
-		LoggingRequestInterceptor loggingRequestInterceptor = new LoggingRequestInterceptor();
-		List<ClientHttpRequestInterceptor> ris = new ArrayList<ClientHttpRequestInterceptor>();
-		ris.add(loggingRequestInterceptor);
-		ris.add(rewriterRequest);
-		return ris;
-	}
-	
-	private static ObjectMapper getObjectMapper(){
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-		return mapper;
-	}
-	
-	private static ResponseEntity<String> put(String url, HttpEntity<?> entity) {
-		return getClient().exchange(url, HttpMethod.PUT, entity, String.class);
-	}
-	
-	private static ResponseEntity<String> post(String url, HttpEntity<?> entity) {
-		return getClient().exchange(url, HttpMethod.POST, entity, String.class);
 	}
 	
 	private static boolean isNull(Object obj) {
@@ -535,7 +409,6 @@ public final class Engine {
 		if(isNull(query.getLifespan()) || 0 <= query.getLifespan()) {
 			query.setLifespan(getDefaultLifespan());
 		}
-		
 	}
 
 	/**

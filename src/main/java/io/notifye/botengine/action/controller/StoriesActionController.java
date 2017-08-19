@@ -49,7 +49,7 @@ public final @Data class StoriesActionController implements StoriesAction {
 	}
 
 	@Override
-	public StoriesAction del(String id) {
+	public StoriesAction del(String id) throws BotException {
 		Engine.deleteStory(id, token);
 		return this;
 	}
