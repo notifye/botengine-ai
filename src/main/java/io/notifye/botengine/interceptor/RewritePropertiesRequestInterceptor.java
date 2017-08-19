@@ -22,15 +22,15 @@ public class RewritePropertiesRequestInterceptor implements ClientHttpRequestInt
 	}
 
 	private String rewriteIfRootQuickReplyFound(String requestBody) {
-		
-		if(requestBody.contains("\"quickReply\":{\"")) {
+		String request = requestBody;
+		if(request.contains("\"quickReply\":{\"")) {
 			log.debug("Request Body before rewrite -> {}", requestBody);
 			log.debug("Match string to  rewrite");
-			requestBody = requestBody.replace("\"quickReply\":{", "");
-			requestBody = requestBody.replace("\"]}}]", "\"]}]");
-			log.debug("Request Body after rewrite -> {}", requestBody);
+			request = request.replace("\"quickReply\":{", "");
+			request = request.replace("\"]}}]", "\"]}]");
+			log.debug("Request Body after rewrite -> {}", request);
 		}
-		return requestBody;
+		return request;
 	}
 	
 
