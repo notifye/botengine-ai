@@ -34,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class Engine {
-	private static final String STORIES_RESOURCE = "%s/stories";
 	private static final String STORY_RESOURCE = "%s/stories/%s";
 	private static final String REFERENCE_RESOURCE = STORY_RESOURCE + "/contexts";
 	private static final String INTERACTIONS_RESOURCE = STORY_RESOURCE + "/interactions";

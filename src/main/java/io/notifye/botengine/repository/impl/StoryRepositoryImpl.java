@@ -74,7 +74,7 @@ public class StoryRepositoryImpl implements StoryRepository {
 		HttpEntity<Story> request = new HttpEntity<>(story, headers);
 		ResponseEntity<String> response = post(getRootStoryUriResource(), request); 
 
-		if(HttpClient.isSuccessful(response)){
+		if(isSuccessful(response)){
 			updateStoryEntity(story, response);
 		}
 		return story;
@@ -84,7 +84,7 @@ public class StoryRepositoryImpl implements StoryRepository {
 	public void del(String id) throws BotException {
 		String uri = getStoryUriResourceById(id);
 		log.debug("Delete Story by Id -> {}", id);
-		HttpHeaders headers = HttpClient.getDevHeaders(token);
+		HttpHeaders headers = getDevHeaders(token);
 		HttpEntity<Story> request = new HttpEntity<>(headers);
 		
 		ResponseEntity<String> response = getClient().exchange(uri, HttpMethod.DELETE, request, String.class);
