@@ -28,6 +28,7 @@ import io.notifye.botengine.bots.Bot;
 import io.notifye.botengine.exception.BotException;
 import io.notifye.botengine.exception.QueryExecutionBotException;
 import io.notifye.botengine.interceptor.LoggingRequestInterceptor;
+import io.notifye.botengine.interceptor.RewritePropertiesRequestInterceptor;
 import io.notifye.botengine.model.Context;
 import io.notifye.botengine.model.Entity;
 import io.notifye.botengine.model.Interaction;
@@ -497,10 +498,11 @@ public final class Engine {
 	}
 	
 	private static List<ClientHttpRequestInterceptor> getRequestInterceptors(){
+		RewritePropertiesRequestInterceptor rewriterRequest = new RewritePropertiesRequestInterceptor();
 		LoggingRequestInterceptor loggingRequestInterceptor = new LoggingRequestInterceptor();
-
 		List<ClientHttpRequestInterceptor> ris = new ArrayList<ClientHttpRequestInterceptor>();
 		ris.add(loggingRequestInterceptor);
+		ris.add(rewriterRequest);
 		return ris;
 	}
 	

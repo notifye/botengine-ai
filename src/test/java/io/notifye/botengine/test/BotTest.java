@@ -20,6 +20,7 @@ import io.notifye.botengine.model.Interaction;
 import io.notifye.botengine.model.Parameter;
 import io.notifye.botengine.model.Query;
 import io.notifye.botengine.model.QueryResponse;
+import io.notifye.botengine.model.QuickReply;
 import io.notifye.botengine.model.ResponseInteraction;
 import io.notifye.botengine.model.Story;
 import io.notifye.botengine.model.Synonym;
@@ -113,6 +114,18 @@ public class BotTest extends AbstractBotTest {
 								.messages(Arrays.asList("Please choose a movie"))
 								.build()))
 						.build())
+					.interaction(Interaction.builder()
+							.name("genres")
+							.action("genres")
+							.userSays(Arrays.asList("Genres", "What are your genres?"))
+							.responses(Arrays.asList(ResponseInteraction.builder()
+									.type(ResponseInteractionType.quickReply)
+									.quickReply(QuickReply.builder()
+											.title("Choose")
+											.replies(Arrays.asList("Science-Fiction", "Fantasy"))
+											.build())
+									.build()))
+							.build())
 					
 					//chossing genre interaction
 					.interaction(Interaction.builder()

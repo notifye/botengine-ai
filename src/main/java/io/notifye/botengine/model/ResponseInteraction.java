@@ -3,6 +3,8 @@ package io.notifye.botengine.model;
 import java.io.Serializable;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.notifye.botengine.model.enums.ResponseInteractionType;
 import lombok.Builder;
 import lombok.Data;
