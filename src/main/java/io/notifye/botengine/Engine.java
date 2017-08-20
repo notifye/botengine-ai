@@ -1,5 +1,8 @@
 package io.notifye.botengine;
 
+import static io.notifye.botengine.BotResources.QUERY_RESOURCE;
+import static io.notifye.botengine.BotResources.REFERENCE_RESOURCE;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,10 +14,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import io.notifye.botengine.bots.Bot;
 import io.notifye.botengine.exception.BotException;
 import io.notifye.botengine.exception.QueryExecutionBotException;
@@ -23,10 +22,13 @@ import io.notifye.botengine.model.Entity;
 import io.notifye.botengine.model.Interaction;
 import io.notifye.botengine.model.Query;
 import io.notifye.botengine.model.QueryResponse;
-import io.notifye.botengine.model.ResponseInteraction;
 import io.notifye.botengine.model.Story;
 import io.notifye.botengine.model.parsers.ParserUtil;
+import io.notifye.botengine.repository.EntityRepository;
+import io.notifye.botengine.repository.InteractionRepository;
 import io.notifye.botengine.repository.StoryRepository;
+import io.notifye.botengine.repository.impl.EntityRepositoryImpl;
+import io.notifye.botengine.repository.impl.InteractionRepositoryImpl;
 import io.notifye.botengine.repository.impl.StoryRepositoryImpl;
 import io.notifye.botengine.security.Token;
 import io.notifye.botengine.util.HttpClient;
@@ -34,13 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class Engine {
-	private static final String STORY_RESOURCE = "%s/stories/%s";
-	private static final String REFERENCE_RESOURCE = STORY_RESOURCE + "/contexts";
-	private static final String INTERACTIONS_RESOURCE = STORY_RESOURCE + "/interactions";
-	private static final String WELCOME_RESOURCE = INTERACTIONS_RESOURCE + "/welcome";
-	private static final String INTERACTIONS_CTX_RESOURCE = INTERACTIONS_RESOURCE + "/%s";
-	private static final String FALLBACK_RESOURCE = INTERACTIONS_RESOURCE + "/fallback";
-	private static final String QUERY_RESOURCE = "%s/query";
 	
 	// Stories
 	public static Story getStory(String id, Token token) throws BotException{
@@ -73,63 +68,24 @@ public final class Engine {
 	}
 	
 	public static Interaction createUserInteraction(Story story, Interaction interaction, Token token) throws BotException{
-		final String INTERACTION_URI_RESOURCE = String.format(INTERACTIONS_RESOURCE, Bot.API_URL, story.getId());
-		HttpHeaders headers = HttpClient.getDevHeaders(token);
-		HttpEntity<Interaction> request = new HttpEntity<>(interaction, headers);
-		ResponseEntity<String> response = HttpClient.post(INTERACTION_URI_RESOURCE, request);
-		
-		log.debug("Interaction Response -> {}", response);
-		if(HttpClient.isSuccessful(response)){
-			log.debug("Interactions created suscessfull");
-			updateInteractionEntity(interaction, response);
-		}
-		return interaction;
+		InteractionRepository interactionRepository = new InteractionRepositoryImpl(story, token);
+		return interactionRepository.createUserInteraction(interaction);
 	}
 
 	public static Interaction createChildInteraction(Story story, Interaction root, Interaction child, Token token) throws BotException{
-		final String INTERACTION_CTX_URI_RESOURCE = String.format(INTERACTIONS_CTX_RESOURCE, Bot.API_URL, story.getId(), root.getId());
-		HttpHeaders headers = HttpClient.getDevHeaders(token);
-		
+		InteractionRepository interactionRepository = new InteractionRepositoryImpl(story, token);
 		initializeEmptyProperties(child);
-		HttpEntity<Interaction> request = new HttpEntity<>(child, headers);
-		ResponseEntity<String> response = HttpClient.post(INTERACTION_CTX_URI_RESOURCE, request);
-
-		log.debug("Interaction Response -> {}", response);
-		if(HttpClient.isSuccessful(response)){
-			log.debug("Interactions created suscessfull");
-			updateChildInteractionEntity(root, child, response);
-		}
-		return root;
+		return interactionRepository.createChildInteraction(root, child);
 	}
 
-	public static Interaction createOrUpdateWelcomeMessage(Story story, Interaction interaction, Token token){
-		final String INTERACTION_URI_RESOURCE = String.format(WELCOME_RESOURCE, Bot.API_URL, story.getId());
-		HttpHeaders headers = HttpClient.getDevHeaders(token);
-		
-		WelcomeMessageWrapper welcomeMessage = new WelcomeMessageWrapper(interaction.getResponses());
-		HttpEntity<WelcomeMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
-		
-		ResponseEntity<String> response = HttpClient.put(INTERACTION_URI_RESOURCE, request);
-		log.debug("Interaction Response -> {}", response);
-		if(HttpClient.isSuccessful(response)){
-			log.debug("Interactions created suscessfull");
-		}
-		return interaction;
+	public static Interaction createOrUpdateWelcomeMessage(Story story, Interaction interaction, Token token) throws BotException{
+		InteractionRepository interactionRepository = new InteractionRepositoryImpl(story, token);
+		return interactionRepository.createOrUpdateWelcomeMessage(interaction);
 	}
 	
-	public static Interaction createOrUpdateFalbackInteraction(Story story, Interaction interaction, Token token){
-		final String INTERACTION_URI_RESOURCE = String.format(FALLBACK_RESOURCE, Bot.API_URL, story.getId());
-		HttpHeaders headers = HttpClient.getDevHeaders(token);
-		
-		FallbackMessageWrapper welcomeMessage = new FallbackMessageWrapper(interaction.getResponses());
-		HttpEntity<FallbackMessageWrapper> request = new HttpEntity<>(welcomeMessage, headers);
-		
-		ResponseEntity<String> response = HttpClient.put(INTERACTION_URI_RESOURCE, request);
-		log.debug("Interaction Response -> {}", response);
-		if(HttpClient.isSuccessful(response)){
-			log.debug("Interactions created suscessfull");
-		}
-		return interaction;
+	public static Interaction createOrUpdateFalbackInteraction(Story story, Interaction interaction, Token token) throws BotException{
+		InteractionRepository interactionRepository = new InteractionRepositoryImpl(story, token);
+		return interactionRepository.createOrUpdateFalbackInteraction(interaction);
 	}
 	
 	public static void createReference(Story story, List<Interaction> interactions, Token token, Context context) {
@@ -178,19 +134,9 @@ public final class Engine {
 	}
 
 	//Entities
-	public static Entity createEntity(Entity entity, Token token){
-		final String ENTITY_URI_RESOURCE = String.format("%s/entities", Bot.API_URL);
-		log.debug("Post Entity with URI -> {}", ENTITY_URI_RESOURCE);
-		
-		HttpHeaders headers = HttpClient.getDevHeaders(token);
-		HttpEntity<Entity> request = new HttpEntity<>(entity, headers);
-		ResponseEntity<String> entityResponse = HttpClient.post(ENTITY_URI_RESOURCE, request);
-
-		log.info("Entity response -> {}", entityResponse);
-		if(HttpClient.isSuccessful(entityResponse)){
-			log.info("Entity created suscessfull");
-		}
-		return entity;
+	public static Entity createEntity(Entity entity, Token token) throws BotException{
+		EntityRepository entityRepository = new EntityRepositoryImpl(token);
+		return entityRepository.createEntity(entity);
 	}
 	
 	//Query
@@ -223,39 +169,6 @@ public final class Engine {
 	
 	private static double getDefaultConfidence() {
 		return Bot.DEFAULT_CONFIDENCE;
-	}
-	
-	@SuppressWarnings("unused")
-	private static void updateInteractionEntity(Interaction interaction, ResponseEntity<String> response) throws BotException {
-		JsonNode node;
-		try {
-			node = ParserUtil.getJsonParser().readValue(response.getBody(), JsonNode.class);
-			JsonNode idNode = node.get("id");
-			JsonNode nameNode = node.get("name");
-			JsonNode descriptionNode = node.get("description");
-			interaction.setId(idNode.asText());
-		} catch (IOException e) {
-			log.error("Error on get Id of interaction", e);
-			if(log.isDebugEnabled()) {
-				e.printStackTrace();
-			}
-			throw new BotException("Error on get Id of interaction", e);
-		}
-	}
-	
-	private static void updateChildInteractionEntity(Interaction root, Interaction child, ResponseEntity<String> response) throws BotException {
-		try {
-			updateInteractionEntity(child, response);
-			root.getChilds().remove(child);
-			root.getChilds().add(child);
-			log.debug("Create Child Interaction suscessfully. \n\tRoot -> {}. \n\tChild -> {}", root, child);
-		} catch (Exception e) {
-			log.error("Error on get Id of interaction", e);
-			if(log.isDebugEnabled()) {
-				e.printStackTrace();
-			}
-			throw new BotException("Error on get Id of interaction", e);
-		}
 	}
 	
 	private static void setContextIds(List<Interaction> interactions, Context context) {
@@ -293,77 +206,6 @@ public final class Engine {
 		long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
 		return String.valueOf(number);
 	}
-	
-	public static final class WelcomeMessageWrapper {
-		
-		@JsonProperty("responses")
-		private List<ResponseInteraction> responses;
-		
-		@JsonIgnore
-		private boolean disabled = false;
-		
-		public WelcomeMessageWrapper(final List<ResponseInteraction> responses){
-			this.responses = responses;
-		}
-		
-		public WelcomeMessageWrapper(final List<ResponseInteraction> responses, boolean disabled){
-			this.responses = responses;
-			this.disabled = disabled;
-		}
-
-		public List<ResponseInteraction> getResponses() {
-			return responses;
-		}
-
-		public void setResponses(List<ResponseInteraction> responses) {
-			this.responses = responses;
-		}
-
-		public boolean isDisabled() {
-			return disabled;
-		}
-
-		public void setDisabled(boolean disabled) {
-			this.disabled = disabled;
-		}
-		
-	}
-	
-	public static final class FallbackMessageWrapper {
-		
-		@JsonProperty("responses")
-		private List<ResponseInteraction> responses;
-		
-		@JsonProperty("disabled")
-		private boolean disabled = false;
-		
-		public FallbackMessageWrapper(final List<ResponseInteraction> responses){
-			this.responses = responses;
-		}
-		
-		public FallbackMessageWrapper(final List<ResponseInteraction> responses, boolean disabled){
-			this.responses = responses;
-			this.disabled = disabled;
-		}
-
-		public List<ResponseInteraction> getResponses() {
-			return responses;
-		}
-
-		public void setResponses(List<ResponseInteraction> responses) {
-			this.responses = responses;
-		}
-
-		public boolean isDisabled() {
-			return disabled;
-		}
-
-		public void setDisabled(boolean disabled) {
-			this.disabled = disabled;
-		}
-		
-	}
-
 	
 	private static QueryResponse q(Query query, Token token) throws QueryExecutionBotException{
 		final String ENTITY_URI_RESOURCE = String.format(QUERY_RESOURCE, Bot.API_URL);

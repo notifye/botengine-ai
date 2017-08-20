@@ -164,7 +164,16 @@ public final @Data class InteractionsActionController implements InteractionActi
 		if(interaction.getEntities() != null && interaction.getEntities().size() > 0){
 			
 			interaction.getEntities()
-				.forEach(entity -> Engine.createEntity(entity, this.token));
+				.forEach(entity -> {
+					try {
+						Engine.createEntity(entity, this.token);
+					} catch (BotException e) {
+						log.error("Error on create entity. Entity -> {}", entity, e);
+						if(log.isDebugEnabled()) {
+							e.printStackTrace();
+						}
+					}
+				});
 		}
 	}
 
