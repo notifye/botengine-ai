@@ -3,7 +3,6 @@ package io.notifye.botengine;
 import static io.notifye.botengine.BotResources.QUERY_RESOURCE;
 import static io.notifye.botengine.BotResources.REFERENCE_RESOURCE;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 
 import io.notifye.botengine.bots.Bot;
 import io.notifye.botengine.exception.BotException;
+import io.notifye.botengine.exception.EntityParserException;
 import io.notifye.botengine.exception.QueryExecutionBotException;
 import io.notifye.botengine.model.Context;
 import io.notifye.botengine.model.Entity;
@@ -23,7 +23,7 @@ import io.notifye.botengine.model.Interaction;
 import io.notifye.botengine.model.Query;
 import io.notifye.botengine.model.QueryResponse;
 import io.notifye.botengine.model.Story;
-import io.notifye.botengine.model.parsers.ParserUtil;
+import io.notifye.botengine.model.parsers.QueryResponseParser;
 import io.notifye.botengine.repository.EntityRepository;
 import io.notifye.botengine.repository.InteractionRepository;
 import io.notifye.botengine.repository.StoryRepository;
@@ -209,6 +209,7 @@ public final class Engine {
 	
 	private static QueryResponse q(Query query, Token token) throws QueryExecutionBotException{
 		final String ENTITY_URI_RESOURCE = String.format(QUERY_RESOURCE, Bot.API_URL);
+		QueryResponseParser parser = new QueryResponseParser();
 		QueryResponse response = null;
 		HttpHeaders headers = HttpClient.getDevHeaders(token);
 		HttpEntity<Query> request = new HttpEntity<>(query, headers);
@@ -222,13 +223,10 @@ public final class Engine {
 				
 				if(entityResponse.getStatusCode().is2xxSuccessful()){
 					log.info("Query executed suscessfull");
-					response = ParserUtil.getJsonParser().readValue(entityResponse.getBody(), QueryResponse.class);
+					response = parser.parse(entityResponse);
 				}
-			} catch (IOException e) {
-				log.error("Error on execute query", e.getMessage());
-				if(log.isDebugEnabled()) {
-					e.printStackTrace();
-				}
+			} catch (EntityParserException e) {
+				throw new QueryExecutionBotException("Error on execute query", e);
 			}
 		}
 		
