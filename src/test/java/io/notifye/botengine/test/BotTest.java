@@ -61,27 +61,6 @@ public class BotTest extends AbstractBotTest {
 		
 	}
 	
-	@Override
-	public Story createStory() {
-		return Story.builder()
-				.name("Movies reservation")
-				.description("Movies reservation")
-				.build();
-	}
-	
-	@Override
-	public Token createToken() {
-		return Token.builder()
-				.token(devAccessToken)
-				.tokenType(TokenType.DEV)
-				.build();
-	}
-	
-	//@After
-	public void after() throws Exception{
-		bot.stories().del();
-	}
-	
 	@Test
 	public void botTest() throws Exception {
 		assertNotNull(bot);
@@ -89,87 +68,19 @@ public class BotTest extends AbstractBotTest {
 			.describedAs("Bot is bot instance").isInstanceOf(DeveloperBot.class);
 		
 		bot.interactions()
-				.add()
-					.welcome(Interaction.builder()
-						.name("welcome interaction")
-						.responses(Arrays.asList(
-								ResponseInteraction.builder()
-										.type(ResponseInteractionType.text)
-										.messages(Arrays.asList(
-												"Hello", 
-												"Hey whats up", 
-												"How can I help you?", 
-												"Speak there noble fellow, how can I help you?", 
-												"Please choose a movie"))
-										.build()))
-							.build())
-					//Add hello interaction
-					.interaction(Interaction.builder()
-						.name("Hello")
-						.action("hello")
-						.triggers(Arrays.asList("hello"))
-						.userSays(Arrays.asList("Hello", "Hi"))
-						.responses(Arrays.asList(ResponseInteraction.builder()
-								.type(ResponseInteractionType.text)
-								.messages(Arrays.asList("Please choose a movie"))
-								.build()))
-						.build())
-					.interaction(Interaction.builder()
-							.name("genres")
-							.action("genres")
-							.userSays(Arrays.asList("Genres", "What are your genres?"))
-							.responses(Arrays.asList(ResponseInteraction.builder()
-									.type(ResponseInteractionType.quickReply)
-									.quickReply(QuickReply.builder()
-											.title("Choose")
-											.replies(Arrays.asList("Science-Fiction", "Fantasy"))
-											.build())
-									.build()))
-							.build())
-					
-					//chossing genre interaction
-					.interaction(Interaction.builder()
-						.name("choosing genre")
-						.action("genre")
-						.userSays(Arrays.asList("Do you play fantasy movies", "Do you play Science Fiction Movies"))
-						.entities(Arrays.asList(Entity.builder()
-								.name("movies")
-								.entries(Arrays.asList(lordOfTheRingsEntry, startWarsEntry))
-								.build()))
-						.responses(Arrays.asList(ResponseInteraction.builder()
-								.type(ResponseInteractionType.text)
-								.messages(Arrays.asList("Yes of course! The best movies you found here!"))
-								.build()))
-						.build()
-						.addChild(Interaction.builder()
-							.name("choosing movies")
-							.action("helloMovies")
-							.userSays(Arrays.asList("the would be great to see @movies:movies", "I would like to go to @movies:movies", "@movies:movies"))
-							.parameters(Arrays.asList(
-									Parameter.builder()
-										.alias("movies")
-										.entity("@movies")
-										.prompts(Arrays.asList("Which movie are you interested in?"))
-										.build()))
-							.responses(Arrays.asList(ResponseInteraction.builder()
-									.type(ResponseInteractionType.text)
-									.messages(okResponses)
-									.build()))
-								.build()))
-					.fallback(Interaction.builder()
-						.name("hello")
-						.action("fallback")
-						.triggers(Arrays.asList("defaultFallback"))
-						.type(InteractionType.fallback)
-						.responses(Arrays.asList(
-								ResponseInteraction.builder()
-										.type(ResponseInteractionType.text)
-										.messages(fallbackResponses)
-										.build()))
-						.build())
-					
-					.referenceByName("Hello", "choosing movies")
-				.build();
+			.add()
+				.welcome(Interaction.builder()
+					.name("welcome interaction")
+					.responses(welcomeResponses())
+				.build())
+				//Add Choose Movie Interaction
+				.interaction(helloInteraction())
+				//chossing genre interaction
+				.interaction(quickGenresInteraction())
+				.interaction(chooseGenreInteraction())
+				.fallback(fakkbackInteraction())
+				.referenceByName("Hello", "choosing movies")
+			.build();
 		
 		// Switch Execution Mode and execute some query
 		Bot clientBot = bot.switchToken(
@@ -193,13 +104,13 @@ public class BotTest extends AbstractBotTest {
 		
 		// Or use Query object to create queries
 		queryResponse = conversation.q(
-				Query.builder()
-					.sessionId("12345678910")
-					.storyId(bot.getStory().getId())
-					.confidence(Bot.DEFAULT_CONFIDENCE) // or not set and leave defaults
-					.lifespan(Bot.DEFAULT_LIFESPAN)     // or not set and leave defaults
-					.trigger("hello")
-					.build());
+			Query.builder()
+				.sessionId("12345678910")
+				.storyId(bot.getStory().getId())
+				.confidence(Bot.DEFAULT_CONFIDENCE) // or not set and leave defaults
+				.lifespan(Bot.DEFAULT_LIFESPAN)     // or not set and leave defaults
+				.trigger("hello")
+				.build());
 		
 		QueryResponse fallbackResponse = conversation.q("Hey 0/");
 		assertNotNull(fallbackResponse);
@@ -210,7 +121,28 @@ public class BotTest extends AbstractBotTest {
 		log.info("Fallback 2 Query Result -> {}", fallbackResponse);
 		
 	}
-
+	
+	@Override
+	public Story createStory() {
+		return Story.builder()
+				.name("Movies reservation")
+				.description("Movies reservation")
+				.build();
+	}
+	
+	@Override
+	public Token createToken() {
+		return Token.builder()
+				.token(devAccessToken)
+				.tokenType(TokenType.DEV)
+				.build();
+	}
+	
+	//@After
+	public void after() throws Exception{
+		bot.stories().del();
+	}
+	
 	/* (non-Javadoc)
 	 * @see io.notifye.botengine.test.AbstractBotTest#createMessages()
 	 */
@@ -225,6 +157,108 @@ public class BotTest extends AbstractBotTest {
 								"I think I'm too stupid to understand you.",
 								"Come on, help me. Try it another way!");
 		
+	}
+	
+	private Interaction chooseGenreInteraction() {
+		return Interaction.builder()
+			.name("choosing genre")
+			.action("genre")
+			.userSays(Arrays.asList("Do you play fantasy movies", "Do you play Science Fiction Movies"))
+			.entities(addEntities())
+			.responses(Arrays.asList(ResponseInteraction.builder()
+					.type(ResponseInteractionType.text)
+					.messages(Arrays.asList("Yes of course! The best movies you found here!"))
+					.build()))
+			.build()
+			.addChild(choosingMoviesInteraction());
+	}
+
+	private Interaction choosingMoviesInteraction() {
+		return Interaction.builder()
+			.name("choosing movies")
+			.action("helloMovies")
+			.userSays(Arrays.asList("the would be great to see @movies:movies", "I would like to go to @movies:movies", "@movies:movies"))
+			.parameters(Arrays.asList(
+					Parameter.builder()
+						.alias("movies")
+						.entity("@movies")
+						.prompts(Arrays.asList("Which movie are you interested in?"))
+						.build()))
+			.responses(Arrays.asList(ResponseInteraction.builder()
+					.type(ResponseInteractionType.text)
+					.messages(okResponses)
+					.build()))
+				.build();
+	}
+	
+	private List<Entity> addEntities() {
+		return Arrays.asList(Entity.builder()
+				.name("movies")
+				.entries(Arrays.asList(lordOfTheRingsEntry, startWarsEntry))
+				.build());
+	}
+	
+	private Interaction fakkbackInteraction() {
+		return Interaction.builder()
+			.name("hello")
+			.action("fallback")
+			.triggers(Arrays.asList("defaultFallback"))
+			.type(InteractionType.fallback)
+			.responses(Arrays.asList(
+					ResponseInteraction.builder()
+							.type(ResponseInteractionType.text)
+							.messages(fallbackResponses)
+							.build()))
+			.build();
+	}
+	
+	private Interaction quickGenresInteraction() {
+		return Interaction.builder()
+				.name("genres")
+				.action("genres")
+				.userSays(Arrays.asList("Genres", "What are your genres?"))
+				.responses(quickReplyGenres())
+		.build();
+	}
+
+	private List<ResponseInteraction> quickReplyGenres() {
+		return Arrays.asList(ResponseInteraction.builder()
+				.type(ResponseInteractionType.quickReply)
+				.quickReply(QuickReply.builder()
+						.title("Choose")
+						.replies(Arrays.asList("Science-Fiction", "Fantasy"))
+						.build())
+				.build());
+	}
+
+	private Interaction helloInteraction() {
+		return Interaction.builder()
+			.name("Hello")
+			.action("hello")
+			.triggers(Arrays.asList("hello"))
+			.userSays(Arrays.asList("Hello", "Hi"))
+			.responses(chooseMovie())
+			.build();
+	}
+
+	private List<ResponseInteraction> chooseMovie() {
+		return Arrays.asList(ResponseInteraction.builder()
+				.type(ResponseInteractionType.text)
+				.messages(Arrays.asList("Please choose a movie"))
+				.build());
+	}
+
+	private List<ResponseInteraction> welcomeResponses() {
+		return Arrays.asList(
+			ResponseInteraction.builder()
+					.type(ResponseInteractionType.text)
+					.messages(Arrays.asList(
+							"Hello", 
+							"Hey whats up", 
+							"How can I help you?", 
+							"Speak there noble fellow, how can I help you?", 
+							"Please choose a movie"))
+					.build());
 	}
 
 }
